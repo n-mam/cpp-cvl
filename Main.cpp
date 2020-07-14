@@ -10,7 +10,15 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/dnn.hpp>
 
-int nPeople = 0;
+class TrackerContext
+{
+  cv::Rect2d bb;                // last bb
+  uint8_t direction;            // last direction
+  cv::Ptr<cv::Tracker> tracker; // tracker 
+};
+
+uint64_t people = 0;
+uint64_t count = 0;
 std::vector<cv::Ptr<cv::Tracker>> Trackers;
 const std::string caffeConfigFile = "../data/deploy.prototxt";
 const std::string caffeWeightFile = "../data/res10_300x300_ssd_iter_140000.caffemodel";
@@ -57,7 +65,7 @@ void DetectFacesDNN(cv::dnn::Net& net, cv::Mat& frame)
 
       Trackers.push_back(tracker);
 
-      nPeople++;
+      people++;
 
       std::cout << "Detection " << x1 << "," << y1 << "[" << x2 - x1 << "," << y2 - y1 << "] added. " 
                 << "Total trackers : " << Trackers.size() << "\n";
@@ -67,15 +75,11 @@ void DetectFacesDNN(cv::dnn::Net& net, cv::Mat& frame)
 
 int main(int argc, char *argv[])
 {
-  #if WIN32
-    _putenv_s("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp");
-  #else
-    setenv("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp");
-  #endif
+  setenv("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp");
 
   auto net = cv::dnn::readNet(caffeWeightFile, caffeConfigFile);
 
-  cv::VideoCapture cap("c:/code/P1033658.mp4"); //, cv::CAP_FFMPEG); 0, cv::CAP_DSHOW ); //P1033658
+  cv::VideoCapture cap("c:/code/my.mp4"); //, cv::CAP_FFMPEG); 0, cv::CAP_DSHOW ); //P1033658 
 
   if(!cap.isOpened())
   {
@@ -86,7 +90,6 @@ int main(int argc, char *argv[])
   cv::namedWindow("Display Window");
 
   cv::Mat frame;
-  uint64_t count = 0;
   uint64_t nTotal = cap.get(cv::CAP_PROP_FRAME_COUNT);
 
   for (;;)
@@ -97,8 +100,7 @@ int main(int argc, char *argv[])
       {
         cap.set(cv::CAP_PROP_POS_FRAMES, 0);
         Trackers.clear();
-        count = 0;
-        nPeople = 0;
+        count = people = 0;
         continue;
       }
       else
@@ -109,12 +111,10 @@ int main(int argc, char *argv[])
 
     count++;
 
-    auto w = frame.cols;
-    auto h = frame.rows;
-
     auto scale = (float) 600 / frame.cols;
     cv::resize(frame, frame, cv::Size(0, 0), scale, scale);
     // check if the detector reqires grayscale
+
     /*
      * first update all active trackers
      */
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
       DetectFacesDNN(net, frame);
     }
 
-    cv::putText(frame, std::to_string(nPeople), cv::Point(5, 20), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
+    cv::putText(frame, std::to_string(people), cv::Point(5, 20), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
 
 	  cv::imshow("Display Window", frame);
 

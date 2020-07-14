@@ -27,7 +27,7 @@ void DetectFacesDNN(cv::dnn::Net& net, cv::Mat& frame)
     resized,
     1.0f,
     cv::Size(300, 300),
-    cv::Scalar(103.93, 116.77, 123.68),
+    cv::Scalar(104.0, 177.0, 123.0),
     false);
 
   net.setInput(inputBlob, "data");
@@ -137,10 +137,10 @@ int main(int argc, char *argv[])
     }
 
     /*
-     * Now detect all faces using the roi(updated) masked 
-     * frame. That way only new detections would happen
+     * Now detect all faces using the updated (masked) 
+     * frame. That way, only new detections would happen
      */
-    if (count % 4 == 0)
+    if (count % 8 == 0)
     {
       DetectFacesDNN(net, frame);
     }

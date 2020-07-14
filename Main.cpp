@@ -26,8 +26,9 @@ void DetectFacesDNN(cv::dnn::Net& net, cv::Mat& frame)
   cv::Mat inputBlob = cv::dnn::blobFromImage(
     resized,
     1.0f,
-    cv::Size(300, 300),
+    cv::Size(300, 300), //model is 300x300
     cv::Scalar(104.0, 177.0, 123.0),
+    false, //caffe uses RBG now ?
     false);
 
   net.setInput(inputBlob, "data");
@@ -74,7 +75,7 @@ int main(int argc, char *argv[])
 
   auto net = cv::dnn::readNet(caffeWeightFile, caffeConfigFile);
 
-  cv::VideoCapture cap("c:/code/my.mp4"); //, cv::CAP_FFMPEG); 0, cv::CAP_DSHOW ); // P1033658
+  cv::VideoCapture cap("c:/code/P1033658.mp4"); //, cv::CAP_FFMPEG); 0, cv::CAP_DSHOW ); //P1033658
 
   if(!cap.isOpened())
   {
@@ -108,11 +109,12 @@ int main(int argc, char *argv[])
 
     count++;
 
-    // if (frame.cols > 640 && frame.rows > 480)
-    // {
-      cv::resize(frame, frame, cv::Size(frame.cols/4, frame.rows/4));
-    // }
+    auto w = frame.cols;
+    auto h = frame.rows;
 
+    auto scale = (float) 600 / frame.cols;
+    cv::resize(frame, frame, cv::Size(0, 0), scale, scale);
+    // check if the detector reqires grayscale
     /*
      * first update all active trackers
      */

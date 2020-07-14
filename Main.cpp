@@ -10,18 +10,24 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/dnn.hpp>
 
-class TrackerContext
+struct TrackerContext
 {
-  cv::Rect2d bb;                // last bb
-  uint8_t direction;            // last direction
-  cv::Ptr<cv::Tracker> tracker; // tracker 
+  std::vector<cv::Rect2d> trail; // last bb
+  cv::Ptr<cv::Tracker> tracker;  // tracker 
 };
+
+std::vector<TrackerContext> Trackers;
 
 uint64_t people = 0;
 uint64_t count = 0;
-std::vector<cv::Ptr<cv::Tracker>> Trackers;
+
 const std::string caffeConfigFile = "../data/deploy.prototxt";
 const std::string caffeWeightFile = "../data/res10_300x300_ssd_iter_140000.caffemodel";
+
+bool IsRectInsideFrame(cv::Rect2d& r, cv::Mat& m)
+{
+  return ((static_cast<cv::Rect>(r) & cv::Rect(0, 0, m.cols, m.rows)) == static_cast<cv::Rect>(r));
+}
 
 void DetectFacesDNN(cv::dnn::Net& net, cv::Mat& frame)
 {
@@ -59,11 +65,17 @@ void DetectFacesDNN(cv::dnn::Net& net, cv::Mat& frame)
       cv::rectangle(frame, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(0, 255, 0), 1, 4);
       cv::putText(frame, std::to_string(confidence), cv::Point(x1, y1-10), cv::FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1);
 
-      cv::Ptr<cv::Tracker> tracker = cv::TrackerCSRT::create();
+      TrackerContext tc;
 
-      tracker->init(frame, cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2)));
+      tc.tracker = cv::TrackerCSRT::create();
 
-      Trackers.push_back(tracker);
+      cv::Rect2d bb = cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2));
+
+      tc.trail.push_back(bb);
+
+      tc.tracker->init(frame, bb);
+
+      Trackers.push_back(tc);
 
       people++;
 
@@ -75,7 +87,7 @@ void DetectFacesDNN(cv::dnn::Net& net, cv::Mat& frame)
 
 int main(int argc, char *argv[])
 {
-  setenv("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp");
+  _putenv_s("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp");
 
   auto net = cv::dnn::readNet(caffeWeightFile, caffeConfigFile);
 
@@ -87,7 +99,7 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  cv::namedWindow("Display Window");
+  cv::namedWindow("People Counting");
 
   cv::Mat frame;
   uint64_t nTotal = cap.get(cv::CAP_PROP_FRAME_COUNT);
@@ -116,19 +128,36 @@ int main(int argc, char *argv[])
     // check if the detector reqires grayscale
 
     /*
-     * first update all active trackers
+     * update all active trackers first
      */
     for (int i = (Trackers.size() - 1); i >=0; i--)
     {
+      auto& tc = Trackers[i];
+
       cv::Rect2d bb;
 
-      auto t = Trackers[i];
-
-      bool fRet = t->update(frame, bb);
+      bool fRet = tc.tracker->update(frame, bb);
 
       if (fRet)
       {
-        cv::rectangle(frame, bb, cv::Scalar(255, 0, 0 ), -1, 1);
+        if (IsRectInsideFrame(bb, frame))
+        {
+          tc.trail.push_back(bb);
+
+          for(auto& b : tc.trail)
+          {
+            cv::circle(frame, b.br(), 1, cv::Scalar(255,0,0));
+          }
+
+          cv::rectangle(frame, bb, cv::Scalar(255, 0, 0 ), -1, 1);
+        }
+        else
+        {
+          Trackers.erase(Trackers.begin() + i);
+
+          std::cout << "Tracker at " << i << " out of bound, size : " << Trackers.size() << "\n";
+        }
+        
       }
       else
       {
@@ -149,7 +178,7 @@ int main(int argc, char *argv[])
 
     cv::putText(frame, std::to_string(people), cv::Point(5, 20), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
 
-	  cv::imshow("Display Window", frame);
+	  cv::imshow("People Counting", frame);
 
     if(cv::waitKey(1) >= 0) 
 	  {

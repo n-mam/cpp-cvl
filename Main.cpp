@@ -11,7 +11,6 @@
 #include <opencv2/dnn.hpp>
 
 int nPeople = 0;
-std::vector<cv::Rect2d> rois;
 std::vector<cv::Ptr<cv::Tracker>> Trackers;
 const std::string caffeConfigFile = "../data/deploy.prototxt";
 const std::string caffeWeightFile = "../data/res10_300x300_ssd_iter_140000.caffemodel";
@@ -21,7 +20,15 @@ void DetectFacesDNN(cv::dnn::Net& net, cv::Mat& frame)
   int frameHeight = frame.rows;
   int frameWidth = frame.cols;
 
-  cv::Mat inputBlob = cv::dnn::blobFromImage(frame, 1.0f, cv::Size(frameWidth, frameHeight), cv::Scalar(), false);
+  cv::Mat resized;
+  cv::resize(frame, resized, cv::Size(300, 300));
+
+  cv::Mat inputBlob = cv::dnn::blobFromImage(
+    resized,
+    1.0f,
+    cv::Size(300, 300),
+    cv::Scalar(103.93, 116.77, 123.68),
+    false);
 
   net.setInput(inputBlob, "data");
   
@@ -43,21 +50,16 @@ void DetectFacesDNN(cv::dnn::Net& net, cv::Mat& frame)
       cv::rectangle(frame, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(0, 255, 0), 1, 4);
       cv::putText(frame, std::to_string(confidence), cv::Point(x1, y1-10), cv::FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1);
 
-      std::cout << "Detection : " << x1 << "," << y1 << "[" << x2 - x1 << "," << y2 - y1 << "]\n" ;
-
-      cv::Rect2d roi(cv::Point(x1, y1), cv::Point(x2, y2));
-
-      rois.push_back(roi);
-
       cv::Ptr<cv::Tracker> tracker = cv::TrackerCSRT::create();
 
-      tracker->init(frame, roi);
+      tracker->init(frame, cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2)));
 
       Trackers.push_back(tracker);
 
       nPeople++;
 
-      std::cout << "added roi for tracking  " << rois.size() << "\n";
+      std::cout << "Detection " << x1 << "," << y1 << "[" << x2 - x1 << "," << y2 - y1 << "] added. " 
+                << "Total trackers : " << Trackers.size() << "\n";
     }
   }
 }
@@ -93,6 +95,7 @@ int main(int argc, char *argv[])
       if(count == nTotal)
       {
         cap.set(cv::CAP_PROP_POS_FRAMES, 0);
+        Trackers.clear();
         count = 0;
         nPeople = 0;
         continue;
@@ -113,9 +116,11 @@ int main(int argc, char *argv[])
     /*
      * first update all active trackers
      */
-    for (auto& t : Trackers)
+    for (int i = (Trackers.size() - 1); i >=0; i--)
     {
       cv::Rect2d bb;
+
+      auto t = Trackers[i];
 
       bool fRet = t->update(frame, bb);
 
@@ -125,9 +130,9 @@ int main(int argc, char *argv[])
       }
       else
       {
-        Trackers.erase(
-          std::remove(Trackers.begin(), Trackers.end(), t), Trackers.end()
-        );
+        Trackers.erase(Trackers.begin() + i);
+
+        std::cout << "Tracker at " << i << " lost, size : " << Trackers.size() << "\n";
       }
     }
 
@@ -140,7 +145,7 @@ int main(int argc, char *argv[])
       DetectFacesDNN(net, frame);
     }
 
-    cv::putText(frame, std::to_string(nPeople), cv::Point(5, 20), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 255, 0), 1);
+    cv::putText(frame, std::to_string(nPeople), cv::Point(5, 20), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
 
 	  cv::imshow("Display Window", frame);
 

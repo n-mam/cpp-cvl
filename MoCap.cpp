@@ -9,6 +9,7 @@
 #include <opencv2/videoio.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/dnn.hpp>
+#include <Common.hpp>
 
 struct TrackerContext
 {
@@ -28,11 +29,6 @@ void on_trackbar(int x, void *y)
 
 }
 
-bool IsRectInsideFrame(cv::Rect2d& r, cv::Mat& m)
-{
-  return ((static_cast<cv::Rect>(r) & cv::Rect(0, 0, m.cols, m.rows)) == static_cast<cv::Rect>(r));
-}
-
 int main(int argc, char *argv[])
 {
   _putenv_s("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp");
@@ -47,9 +43,10 @@ int main(int argc, char *argv[])
 
   cv::namedWindow("Motion Capture");
 
-  cv::createTrackbar("Aspect ratio", "Motion Capture", &slider_ar, 100, on_trackbar);
+  cv::createTrackbar("w/h", "Motion Capture", &slider_ar, 200, on_trackbar);
 
   cv::Mat ff, frame;
+
   uint64_t nTotal = cap.get(cv::CAP_PROP_FRAME_COUNT);
 
   for (;;)
@@ -74,8 +71,9 @@ int main(int argc, char *argv[])
     cv::Mat gray, blur, delta, thresh, dilate;
 
     auto scale = (float) 600 / frame.cols;
+
     cv::resize(frame, frame, cv::Size(0, 0), scale, scale);
-    
+
     cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
     cv::GaussianBlur(gray, blur, cv::Size(21,21), 0);
@@ -93,21 +91,23 @@ int main(int argc, char *argv[])
     cv::dilate(thresh, dilate, cv::Mat(), cv::Point(-1, -1), 2);
 
     //Find the contours. Use the contourOutput Mat so the original image doesn't get overwritten
-    std::vector<std::vector<cv::Point> > contours;
+    std::vector<std::vector<cv::Point>> contours;
     cv::Mat contourOutput = dilate.clone();
+    
     cv::findContours(contourOutput, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
     cv::Mat contourImage(frame.size(), CV_8UC3, cv::Scalar(0,0,0));
+
     for (size_t i = 0; i < contours.size(); i++) 
     {
       auto area = cv::contourArea(contours[i]);
       auto bb = cv::boundingRect(contours[i]);
       auto ar = (double)bb.width/bb.height;
 
-      if (area > 10000 && (ar <= ((double)slider_ar/100)))
+      if (area > 10000 && (ar <= ((double)slider_ar/200)))
       {
         cv::rectangle(frame, bb, cv::Scalar(255, 0, 0 ), 1, 1);
-        cv::putText(frame, std::to_string(ar), bb.br(), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 255, 0), 1);
+        cv::putText(frame, "w/h : " + std::to_string(bb.width) + "/" + std::to_string(bb.height) +  ", A : " + std::to_string(area), bb.br(), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 255, 0), 1);
       }
 
       std::cout << "contour area : " << area << " aspect ration : " << std::to_string(ar) << "\n";
@@ -153,19 +153,10 @@ int main(int argc, char *argv[])
       }
     }
 
-    /*
-     * Now detect all faces using the updated (masked) 
-     * frame. That way, only new detections would happen
-     */
-    //DetectFacesDNN(net, frame);
-
     cv::putText(frame, std::to_string(people), cv::Point(5, 20), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
 
 	  cv::imshow("Motion Capture", frame);
 
-    if(cv::waitKey(1) >= 0) 
-	  {
-	    break;
-	  }
+    if (!ProcessKeyboard(cv::waitKey(1), cap, count)) break;
   }   
 }

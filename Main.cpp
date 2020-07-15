@@ -9,6 +9,7 @@
 #include <opencv2/videoio.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/dnn.hpp>
+#include <Common.hpp>
 
 struct TrackerContext
 {
@@ -24,10 +25,6 @@ uint64_t count = 0;
 const std::string caffeConfigFile = "../data/deploy.prototxt";
 const std::string caffeWeightFile = "../data/res10_300x300_ssd_iter_140000.caffemodel";
 
-bool IsRectInsideFrame(cv::Rect2d& r, cv::Mat& m)
-{
-  return ((static_cast<cv::Rect>(r) & cv::Rect(0, 0, m.cols, m.rows)) == static_cast<cv::Rect>(r));
-}
 
 void DetectFacesDNN(cv::dnn::Net& net, cv::Mat& frame)
 {
@@ -125,7 +122,6 @@ int main(int argc, char *argv[])
 
     auto scale = (float) 600 / frame.cols;
     cv::resize(frame, frame, cv::Size(0, 0), scale, scale);
-    // check if the detector reqires grayscale
 
     /*
      * update all active trackers first
@@ -157,7 +153,6 @@ int main(int argc, char *argv[])
 
           std::cout << "Tracker at " << i << " out of bound, size : " << Trackers.size() << "\n";
         }
-        
       }
       else
       {
@@ -180,9 +175,6 @@ int main(int argc, char *argv[])
 
 	  cv::imshow("People Counting", frame);
 
-    if(cv::waitKey(1) >= 0) 
-	  {
-	    break;
-	  }
+    if (!ProcessKeyboard(cv::waitKey(1), cap, count)) break;
   }   
 }

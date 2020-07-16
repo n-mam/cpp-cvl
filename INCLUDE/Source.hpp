@@ -10,7 +10,12 @@ class Source
 
     Source(const std::string& s)
     {
-
+      iCapture = cv::VideoCapture(s.c_str()); 
+    }
+    
+    Source(int c)
+    {
+      iCapture = cv::VideoCapture(c); 
     }
 
     ~Source()
@@ -99,7 +104,7 @@ class Source
 
     cv::VideoCapture iCapture;
 
-    uint64_t iCurrentOffset = 0;
+    size_t iCurrentOffset = 0;
 
 };
 

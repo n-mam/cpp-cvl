@@ -28,9 +28,9 @@ class TrackingManager
       iTrackingContexts.clear();
     }
 
-    int GetContextCount(void)
+    size_t GetContextCount(void)
     {
-      iTrackingContexts.size();
+      return iTrackingContexts.size();
     }
 
     void AddNewTrackingContext(cv::Mat& m, cv::Rect2d& r)
@@ -44,6 +44,11 @@ class TrackingManager
       tc.iTracker->init(m, r);
 
       iTrackingContexts.push_back(tc);
+    }
+
+    void ClearAllContexts(void)
+    {
+      iTrackingContexts.clear();
     }
 
     void Update(cv::Mat& frame)

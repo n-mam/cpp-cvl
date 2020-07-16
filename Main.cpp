@@ -13,7 +13,6 @@
 #include <Tracker.hpp>
 
 uint64_t people = 0;
-uint64_t count = 0;
 
 const std::string caffeConfigFile = "../data/deploy.prototxt";
 const std::string caffeWeightFile = "../data/res10_300x300_ssd_iter_140000.caffemodel";
@@ -73,7 +72,7 @@ int main(int argc, char *argv[])
 
   auto net = cv::dnn::readNet(caffeWeightFile, caffeConfigFile);
 
-  Source s("c:/code/my.mp4"); //, cv::CAP_FFMPEG); 0, cv::CAP_DSHOW ); //P1033658 
+  Source s(0);
 
   if(!s.isOpened())
   {
@@ -92,7 +91,7 @@ int main(int argc, char *argv[])
       if(s.HasEnded())
       {
         s.Rewind();
-        Trackers.clear();
+        tm.ClearAllContexts();
         people = 0;
         continue;
       }
@@ -103,13 +102,13 @@ int main(int argc, char *argv[])
     }
 
     auto scale = (float) 600 / frame.cols;
-    
+
     cv::resize(frame, frame, cv::Size(0, 0), scale, scale);
 
     /*
      * update all active trackers first
      */
-    
+    tm.Update(frame);
     /*
      * Now detect all faces using the updated (masked) 
      * frame. That way, only new detections would happen

@@ -1,4 +1,4 @@
-project (ocv-ppl-cnt)
+project (cpp-cvl)
 
 find_package(Threads)
 

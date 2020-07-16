@@ -9,33 +9,24 @@
 #include <opencv2/videoio.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/dnn.hpp>
+
 #include <Common.hpp>
+#include <Source.hpp>
+#include <Tracker.hpp>
 
-struct TrackerContext
-{
-  std::vector<cv::Rect2d> trail; // last bb
-  cv::Ptr<cv::Tracker> tracker;  // tracker 
-};
-
-std::vector<TrackerContext> Trackers;
+TrackingManager tm;
 
 uint64_t people = 0;
-uint64_t count = 0;
 
 int slider_ar = 100;
-
-void on_trackbar(int x, void *y)
-{
-
-}
 
 int main(int argc, char *argv[])
 {
   _putenv_s("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp");
 
-  cv::VideoCapture cap("c:/code/calib.mp4"); //, cv::CAP_FFMPEG); 0, cv::CAP_DSHOW ); //P1033658 
+  Source s(0);
 
-  if(!cap.isOpened())
+  if(!s.isOpened())
   {
     std::cout << "Error opening video stream\n";
     return -1;
@@ -43,21 +34,19 @@ int main(int argc, char *argv[])
 
   cv::namedWindow("Motion Capture");
 
-  cv::createTrackbar("w/h", "Motion Capture", &slider_ar, 200, on_trackbar);
+  cv::createTrackbar("w/h", "Motion Capture", &slider_ar, 200, nullptr);
 
   cv::Mat ff, frame;
 
-  uint64_t nTotal = cap.get(cv::CAP_PROP_FRAME_COUNT);
-
   for (;;)
   {
-    if(!cap.read(frame))
+    if(!s.Read(frame))
 	  {
-      if(count == nTotal)
+      if(s.HasEnded())
       {
-        cap.set(cv::CAP_PROP_POS_FRAMES, 0);
-        Trackers.clear();
-        count = people = 0;
+        s.Rewind();
+        tm.ClearAllContexts();
+        people = 0;
         continue;
       }
       else
@@ -66,13 +55,13 @@ int main(int argc, char *argv[])
       }
     }
 
-    count++;
-
-    cv::Mat gray, blur, delta, thresh, dilate;
+    cv::flip(frame, frame, 1);
 
     auto scale = (float) 600 / frame.cols;
 
     cv::resize(frame, frame, cv::Size(0, 0), scale, scale);
+
+    cv::Mat gray, blur, delta, thresh, dilate;
 
     cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
@@ -109,7 +98,7 @@ int main(int argc, char *argv[])
       if (area > 10000 && (ar <= ((double)slider_ar/200)))
       {
         cv::rectangle(frame, bb, cv::Scalar(255, 0, 0 ), 1, 1);
-        cv::putText(frame, "w/h : " + std::to_string(bb.width) + "/" + std::to_string(bb.height) +  ", A : " + std::to_string(area), bb.br(), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 255, 0), 1);
+        cv::putText(frame, "w/h : " + std::to_string(bb.width) + "/" + std::to_string(bb.height) +  ", A : " + std::to_string(area), bb.tl(), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 255, 0), 1);
       }
 
       std::cout << "contour area : " << area << " aspect ration : " << std::to_string(ar) << "\n";
@@ -118,48 +107,12 @@ int main(int argc, char *argv[])
     /*
      * update all active trackers first
      */
-    for (int i = (Trackers.size() - 1); i >=0; i--)
-    {
-      auto& tc = Trackers[i];
-
-      cv::Rect2d bb;
-
-      bool fRet = tc.tracker->update(frame, bb);
-
-      if (fRet)
-      {
-        if (IsRectInsideFrame(bb, frame))
-        {
-          tc.trail.push_back(bb);
-
-          for(auto& b : tc.trail)
-          {
-            cv::circle(frame, b.br(), 1, cv::Scalar(255,0,0));
-          }
-
-          cv::rectangle(frame, bb, cv::Scalar(255, 0, 0 ), -1, 1);
-        }
-        else
-        {
-          Trackers.erase(Trackers.begin() + i);
-
-          std::cout << "Tracker at " << i << " out of bound, size : " << Trackers.size() << "\n";
-        }
-        
-      }
-      else
-      {
-        Trackers.erase(Trackers.begin() + i);
-
-        std::cout << "Tracker at " << i << " lost, size : " << Trackers.size() << "\n";
-      }
-    }
 
     cv::putText(frame, std::to_string(people), cv::Point(5, 20), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
 
 	  cv::imshow("Motion Capture", frame);
 
-    if (!HandleUserInput(cv::waitKey(1), cap, count)) break;
+    if (!s.HandleUserInput()) break;
   }   
 }
 

@@ -63,7 +63,7 @@ class TrackingManager
 
         if (fRet)
         {
-          if (IsRectInsideFrame(bb, frame))
+          if (IsRectInsideMat(bb, frame))
           {
             tc.iBBTrail.push_back(bb);
 

@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 {
   _putenv_s("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp");
 
-  Source s(0);
+  Source s("f:/my.mp4");
 
   if(!s.isOpened())
   {
@@ -91,17 +91,39 @@ int main(int argc, char *argv[])
 
     for (size_t i = 0; i < contours.size(); i++) 
     {
-      auto area = cv::contourArea(contours[i]);
+      auto A = cv::contourArea(contours[i]);
       auto bb = cv::boundingRect(contours[i]);
       auto ar = (double)bb.width/bb.height;
 
-      if (area > 10000 && (ar <= ((double)slider_ar/200)))
+      bool skip = false;
+      /*
+       * skip this bb if it is inside any other bb
+       */
+      for (size_t j = 0; (j < contours.size() && (i != j)); j++)
       {
-        cv::rectangle(frame, bb, cv::Scalar(255, 0, 0 ), 1, 1);
-        cv::putText(frame, "w/h : " + std::to_string(bb.width) + "/" + std::to_string(bb.height) +  ", A : " + std::to_string(area), bb.tl(), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 255, 0), 1);
+        if (IsRectInsideRect(bb, cv::boundingRect(contours[j])))
+        {
+          skip = true;
+        }
+      }
+      /*
+       * skip this bb if it is not inside the monitoring react 
+       */
+      cv::Rect mon(10, 10, frame.cols - 20, frame.rows - 20);
+      cv::rectangle(frame, mon, cv::Scalar(255, 0, 0 ), 1, 1);
+
+      if (!IsRectInsideRect(bb, mon) || A < 5000)
+      {
+        skip = true;
       }
 
-      std::cout << "contour area : " << area << " aspect ration : " << std::to_string(ar) << "\n";
+      if (!skip)
+      {
+        cv::rectangle(frame, bb, cv::Scalar(255, 0, 0 ), 1, 1);
+        cv::putText(frame, "w/h : " + std::to_string(bb.width) + "/" + std::to_string(bb.height) +  ", A : " + std::to_string(A), bb.tl(), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 255, 0), 1);
+      }
+
+      std::cout << "contour area : " << A << " aspect ratio : " << std::to_string(ar) << "\n";
     }
 
     /*
@@ -111,6 +133,7 @@ int main(int argc, char *argv[])
     cv::putText(frame, std::to_string(people), cv::Point(5, 20), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
 
 	  cv::imshow("Motion Capture", frame);
+    cv::imshow("Mask", delta);
 
     if (!s.HandleUserInput()) break;
   }   
@@ -229,3 +252,71 @@ int main(int argc, char *argv[])
 //     return 0;
     
 // }
+
+#include <iostream>
+#include <sstream>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/videoio.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/video.hpp>
+using namespace cv;
+using namespace std;
+const char* params
+    = "{ help h         |           | Print usage }"
+      "{ input          | vtest.avi | Path to a video or a sequence of image }"
+      "{ algo           | MOG2      | Background subtraction method (KNN, MOG2) }";
+int mmain(int argc, char* argv[])
+{
+    Ptr<BackgroundSubtractor> pBackSub;
+
+    // if (parser.get<String>("MOG2") == "MOG2")
+        pBackSub = createBackgroundSubtractorMOG2();
+    // else
+     //   pBackSub = createBackgroundSubtractorKNN();
+
+    VideoCapture capture(0);
+
+    if (!capture.isOpened()){
+        //error in opening the video input
+        cerr << "Unable to open source " << endl;
+        return 0;
+    }
+    Mat frame, fgMask;
+    while (true) 
+    {
+        capture >> frame;
+        if (frame.empty())
+            break;
+    cv::flip(frame, frame, 1);
+
+    auto scale = (float) 600 / frame.cols;
+
+    cv::resize(frame, frame, cv::Size(0, 0), scale, scale);
+
+    cv::Mat gray, blur, delta, thresh, dilate;
+
+    cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
+
+    cv::GaussianBlur(gray, blur, cv::Size(21,21), 0);            
+
+        //update the background model
+        pBackSub->apply(blur, fgMask, 0.5);
+        //get the frame number and write it on the current frame
+        rectangle(frame, cv::Point(10, 2), cv::Point(100,20),
+                  cv::Scalar(255,255,255), -1);
+        stringstream ss;
+        ss << capture.get(CAP_PROP_POS_FRAMES);
+        string frameNumberString = ss.str();
+        putText(frame, frameNumberString.c_str(), cv::Point(15, 15),
+                FONT_HERSHEY_SIMPLEX, 0.5 , cv::Scalar(0,0,0));
+        //show the current frame and the fg masks
+        imshow("Frame", frame);
+        imshow("FG Mask", fgMask);
+        //get the input from the keyboard
+        int keyboard = waitKey(30);
+        if (keyboard == 'q' || keyboard == 27)
+            break;
+    }
+    return 0;
+}

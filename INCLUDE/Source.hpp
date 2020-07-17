@@ -15,7 +15,7 @@ class Source
     
     Source(int c)
     {
-      iCapture = cv::VideoCapture(c); 
+      iCapture = cv::VideoCapture(iCamera = c);
     }
 
     ~Source()
@@ -51,6 +51,11 @@ class Source
       if (fRet)
       {
         iCurrentOffset++;
+
+        if (iCamera != -1)
+        {
+          cv::flip(m, m, 1);
+        }
       }
 
       return fRet;
@@ -101,6 +106,10 @@ class Source
     }
 
   protected:
+
+    int iCamera = -1;
+
+    std::string iSource;
 
     cv::VideoCapture iCapture;
 

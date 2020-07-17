@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 
   auto net = cv::dnn::readNet(caffeWeightFile, caffeConfigFile);
 
-  Source s(0);
+  Source s("f:/my.mp4");
 
   if(!s.isOpened())
   {

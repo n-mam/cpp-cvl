@@ -45,19 +45,15 @@ void DetectFacesDNN(cv::dnn::Net& net, cv::Mat& frame)
   {
     float confidence = detectionMat.at<float>(i, 2);
 
-    if (confidence > 0.7)
+    if (confidence > 0.2)
     {
       int x1 = static_cast<int>(detectionMat.at<float>(i, 3) * frameWidth);
       int y1 = static_cast<int>(detectionMat.at<float>(i, 4) * frameHeight);
       int x2 = static_cast<int>(detectionMat.at<float>(i, 5) * frameWidth);
       int y2 = static_cast<int>(detectionMat.at<float>(i, 6) * frameHeight);
 
-      cv::rectangle(frame, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(0, 255, 0), 1, 4);
-
-      cv::putText(frame, std::to_string(confidence), cv::Point(x1, y1-10), cv::FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1);
-
-      tm.AddNewTrackingContext(frame, cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2)));
-
+      //tm.AddNewTrackingContext(frame, cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2)));
+      cv::rectangle(frame, cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2)), cv::Scalar(255, 0, 0 ), 1, 1);
       people++;
 
       std::cout << "Detection " << x1 << "," << y1 << "[" << x2 - x1 << "," << y2 - y1 << "] added. " 
@@ -121,7 +117,7 @@ int main(int argc, char *argv[])
      * Now detect all faces using the updated (masked) 
      * frame. That way, only new detections would happen
      */
-    if (s.GetCurrentOffset() % 8 == 0)
+    if (s.GetCurrentOffset() % 4 == 0)
     {
       DetectFacesDNN(net, frame);
     }

@@ -53,6 +53,11 @@ int main(int argc, char *argv[])
 
     cv::resize(frame, frame, cv::Size(0, 0), scale, scale);
 
+    if (frame.channels() == 4)
+    {
+      cvtColor(frame, frame, cv::COLOR_BGRA2BGR);
+    }
+
     cv::Mat gray, blur, delta, thresh, dilate;
 
     cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);

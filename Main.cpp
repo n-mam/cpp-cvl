@@ -14,8 +14,11 @@
 
 uint64_t people = 0;
 
-const std::string caffeConfigFile = "../data/deploy.prototxt";
-const std::string caffeWeightFile = "../data/res10_300x300_ssd_iter_140000.caffemodel";
+const std::string resnet_configFile = "../MODELS/OpenCV_DNN_deploy.prototxt";
+const std::string resnet_weightFile = "../MODELS/OpenCV_DNN_res10_300x300_ssd_iter_140000.caffemodel";
+
+const std::string mobilenet_configFile = "../MODELS/MobileNetSSD_deploy.prototxt";
+const std::string mobilenet_weightFile = "../MODELS/MobileNetSSD_deploy.caffemodel";
 
 TrackingManager tm;
 
@@ -45,7 +48,7 @@ void DetectFacesDNN(cv::dnn::Net& net, cv::Mat& frame)
   {
     float confidence = detectionMat.at<float>(i, 2);
 
-    if (confidence > 0.2)
+    if (confidence > 0.7)
     {
       int x1 = static_cast<int>(detectionMat.at<float>(i, 3) * frameWidth);
       int y1 = static_cast<int>(detectionMat.at<float>(i, 4) * frameHeight);
@@ -66,12 +69,12 @@ int main(int argc, char *argv[])
 {
   _putenv_s("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp");
 
-  auto net = cv::dnn::readNet(caffeWeightFile, caffeConfigFile);
+  auto net = cv::dnn::readNet(mobilenet_weightFile, mobilenet_configFile);
 
   net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
   net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
 
-  Source s("f:/my.mp4");
+  Source s("f:/tv2.mp4");
 
   if(!s.isOpened())
   {

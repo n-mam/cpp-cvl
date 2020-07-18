@@ -6,6 +6,10 @@ if (UNIX)
  find_package(OpenCV REQUIRED)
 endif (UNIX)      
 
+link_directories(
+  C:/opencv/build/lib/Debug
+)
+
 ADD_EXECUTABLE(counter Main.cpp)
 ADD_EXECUTABLE(mocap Mocap.cpp)
 
@@ -16,17 +20,19 @@ TARGET_INCLUDE_DIRECTORIES(
  counter
  PRIVATE
  INCLUDE
+ C:/opencv/build/install/include
 )
 
 TARGET_INCLUDE_DIRECTORIES(
  mocap
  PRIVATE
  INCLUDE
+ C:/opencv/build/install/include
 )
 
 if (WIN32)
- TARGET_LINK_LIBRARIES(counter Ws2_32.lib)
- TARGET_LINK_LIBRARIES(mocap Ws2_32.lib) 
+ TARGET_LINK_LIBRARIES(counter Ws2_32.lib opencv_world440d)
+ TARGET_LINK_LIBRARIES(mocap Ws2_32.lib opencv_world440d) 
 else()
  TARGET_LINK_LIBRARIES(counter ${CMAKE_THREAD_LIBS_INIT} OpenCV)
  TARGET_LINK_LIBRARIES(counter ${CMAKE_THREAD_LIBS_INIT} OpenCV) 

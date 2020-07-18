@@ -72,6 +72,9 @@ int main(int argc, char *argv[])
 
   auto net = cv::dnn::readNet(caffeWeightFile, caffeConfigFile);
 
+  net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+  net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+
   Source s("f:/my.mp4");
 
   if(!s.isOpened())
@@ -104,6 +107,11 @@ int main(int argc, char *argv[])
     auto scale = (float) 600 / frame.cols;
 
     cv::resize(frame, frame, cv::Size(0, 0), scale, scale);
+
+    if (frame.channels() == 4)
+    {
+      cvtColor(frame, frame, cv::COLOR_BGRA2BGR);
+    }
 
     /*
      * update all active trackers first

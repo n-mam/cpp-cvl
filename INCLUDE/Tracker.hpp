@@ -54,8 +54,8 @@ class TrackingManager
     void Update(cv::Mat& frame)
     {
       if (!iTrackingContexts.size()) return;
-      
-      for (size_t i = (iTrackingContexts.size() - 1); i >= 0; i--)
+
+      for (int i = (iTrackingContexts.size() - 1); i >= 0; i--)
       {
         auto& tc = iTrackingContexts[i];
 

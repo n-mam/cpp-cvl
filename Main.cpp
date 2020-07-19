@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 {
   _putenv_s("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp");
 
-  Source s("f:/my.mp4");
+  Source s("f:/tv2.mp4");
 
   if(!s.isOpened())
   {
@@ -67,7 +67,12 @@ int main(int argc, char *argv[])
      */
     if (s.GetCurrentOffset() % 4 == 0)
     {
-      detector.Detect(frame);
+      auto rects = detector.Detect(frame);
+
+      for (auto& r : rects)
+      {
+        tm.AddNewTrackingContext(frame, r);
+      }
     }
 
     cv::putText(frame, std::to_string(people), cv::Point(5, 20), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);

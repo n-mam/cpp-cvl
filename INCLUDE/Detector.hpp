@@ -24,7 +24,7 @@ class Detector
 
     virtual ~Detector() {}
  
-    virtual void Detect(cv::Mat& frame) = 0;
+    virtual std::vector<cv::Rect2d> Detect(cv::Mat& frame) = 0;
 
   protected:
 
@@ -45,8 +45,10 @@ class FaceDetector : public Detector
     {
     }
 
-    virtual void Detect(cv::Mat& frame) override
+    virtual std::vector<cv::Rect2d> Detect(cv::Mat& frame) override
     {
+      std::vector<cv::Rect2d> out;
+
       cv::Mat resized;
 
       cv::resize(frame, resized, cv::Size(300, 300));
@@ -54,14 +56,14 @@ class FaceDetector : public Detector
       cv::Mat inputBlob = cv::dnn::blobFromImage(
         resized,
         1.0f,
-        cv::Size(300, 300), //model is 300x300
+        cv::Size(300, 300),
         cv::Scalar(104.0, 177.0, 123.0),
-        false, //caffe uses RBG now ?
+        false,
         false);
 
-      iNetwork.setInput(inputBlob, "data");
+      iNetwork.setInput(inputBlob);
 
-      cv::Mat detection = iNetwork.forward("detection_out");
+      cv::Mat detection = iNetwork.forward();
 
       cv::Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
 
@@ -76,12 +78,13 @@ class FaceDetector : public Detector
           int x2 = static_cast<int>(detectionMat.at<float>(i, 5) * frame.cols);
           int y2 = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
 
-          //tm.AddNewTrackingContext(frame, cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2)));
-          cv::rectangle(frame, cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2)), cv::Scalar(255, 0, 0 ), 1, 1);
+          out.emplace_back(cv::Point(x1, y1), cv::Point(x2, y2));
 
           std::cout << "Face detected at " << x1 << "," << y1 << "[" << x2 - x1 << "," << y2 - y1 << "]\n";
         }
       }
+
+      return out;
     }
 };
 
@@ -94,8 +97,10 @@ class ObjectDetector : public Detector
     {
     }
 
-    virtual void Detect(cv::Mat& frame) override
+    virtual std::vector<cv::Rect2d> Detect(cv::Mat& frame) override
     {
+      std::vector<cv::Rect2d> out;
+
       cv::Mat resized;
 
       cv::resize(frame, resized, cv::Size(300, 300));
@@ -103,14 +108,14 @@ class ObjectDetector : public Detector
       cv::Mat inputBlob = cv::dnn::blobFromImage(
         resized,
         0.007843f,
-        cv::Size(300, 300), //model is 300x300
+        cv::Size(300, 300),
         cv::Scalar(127.5, 127.5, 127.5),
-        false, //caffe uses RBG now ?
+        false, 
         false);
 
-      iNetwork.setInput(inputBlob, "data");
+      iNetwork.setInput(inputBlob);
 
-      cv::Mat detection = iNetwork.forward("detection_out");
+      cv::Mat detection = iNetwork.forward();
 
       cv::Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
 
@@ -126,12 +131,13 @@ class ObjectDetector : public Detector
           int x2 = static_cast<int>(detectionMat.at<float>(i, 5) * frame.cols);
           int y2 = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
 
-          //tm.AddNewTrackingContext(frame, cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2)));
-          cv::rectangle(frame, cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2)), cv::Scalar(255, 0, 0 ), 1, 1);
+          out.emplace_back(cv::Point(x1, y1), cv::Point(x2, y2));
 
           std::cout << "Object(" + iObjectClass[idx] + ") detected at " << x1 << "," << y1 << "[" << x2 - x1 << "," << y2 - y1 << "]\n";
         }
       }
+
+      return out;
     }
 
   protected:

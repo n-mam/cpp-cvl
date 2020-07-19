@@ -89,11 +89,11 @@ class Source
         }
         else if (c == 'f' || c == 'F')
         {
-          auto o = iCurrentOffset + 5;
+          auto offset = iCurrentOffset + 5;
 
-          if (o <= iCapture.get(cv::CAP_PROP_FRAME_COUNT))
+          if (offset <= iCapture.get(cv::CAP_PROP_FRAME_COUNT))
           {
-            iCapture.set(cv::CAP_PROP_POS_FRAMES, iCurrentOffset = o);
+            iCapture.set(cv::CAP_PROP_POS_FRAMES, iCurrentOffset = offset);
           }
         }
         else if (c == 'q' || c == 'Q')

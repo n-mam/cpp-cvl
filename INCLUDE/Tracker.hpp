@@ -6,11 +6,15 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/tracking/tracking.hpp>
 
+#include <dlib/opencv.h>
+#include <dlib/image_processing.h>
+
 #include <Common.hpp>
 
 struct TrackinContext
 {
-  cv::Ptr<cv::Tracker> iTracker;  // cv tracker     
+  cv::Ptr<cv::Tracker> iTracker;  // cv tracker
+  dlib::correlation_tracker tracker; //dlib tracker
   std::vector<cv::Rect2d> iBBTrail;  // last bb
 };
 
@@ -20,7 +24,6 @@ class TrackingManager
 
     TrackingManager()
     {
-
     }
 
     ~TrackingManager()
@@ -33,7 +36,62 @@ class TrackingManager
       return iTrackingContexts.size();
     }
 
-    void AddNewTrackingContext(cv::Mat& m, cv::Rect2d& r)
+    void ClearAllContexts(void)
+    {
+      iTrackingContexts.clear();
+    }
+
+    virtual void AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& r) {}
+
+    virtual void Update(const cv::Mat& frame) {}
+
+  protected:
+
+    std::vector<TrackinContext> iTrackingContexts;
+};
+
+class DlibTracker : public TrackingManager
+{
+  public:
+
+    void AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& r) override
+    {
+      TrackinContext tc;
+
+      tc.iBBTrail.push_back(r);
+//dlib::bgr_pixel
+      dlib::array2d<dlib::bgr_pixel> img;
+      dlib::assign_image(img, dlib::cv_image<dlib::bgr_pixel>(m));
+
+      tc.tracker.start_track(img, dlib::centered_rect(dlib::point(r.x, r.y), r.width, r.height));
+
+      iTrackingContexts.push_back(tc);
+    }
+
+    void Update(const cv::Mat& m) override
+    {
+      if (!iTrackingContexts.size()) return;
+
+      for (int i = (iTrackingContexts.size() - 1); i >= 0; i--)
+      {
+        auto& tc = iTrackingContexts[i];
+
+        dlib::array2d<dlib::bgr_pixel> img;
+        dlib::assign_image(img, dlib::cv_image<dlib::bgr_pixel>(m));
+
+        tc.tracker.update(img);
+      }
+    }
+
+  protected:
+
+};
+
+class OpenCVTracker : public TrackingManager
+{
+  public:
+
+    void AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& r) override
     {
       TrackinContext tc;
 
@@ -46,12 +104,7 @@ class TrackingManager
       iTrackingContexts.push_back(tc);
     }
 
-    void ClearAllContexts(void)
-    {
-      iTrackingContexts.clear();
-    }
-
-    void Update(cv::Mat& frame)
+    void Update(const cv::Mat& frame) override
     {
       if (!iTrackingContexts.size()) return;
 
@@ -94,7 +147,6 @@ class TrackingManager
 
   protected:
 
-    std::vector<TrackinContext> iTrackingContexts;
 };
 
 

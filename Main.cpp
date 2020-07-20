@@ -10,13 +10,13 @@
 
 uint64_t people = 0;
 
-TrackingManager tm;
+OpenCVTracker ot;
 
 int main(int argc, char *argv[])
 {
   _putenv_s("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp");
 
-  Source s("f:/tv2.mp4");
+  Source s("f:/my.mp4");
 
   if(!s.isOpened())
   {
@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  auto detector = ObjectDetector();
+  auto detector = FaceDetector();
 
   cv::Mat frame;
 
@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
       if(s.HasEnded())
       {
         s.Rewind();
-        tm.ClearAllContexts();
+        ot.ClearAllContexts();
         people = 0;
         continue;
       }
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
     /*
      * update all active trackers first
      */
-    tm.Update(frame);
+    ot.Update(frame);
     /*
      * Now detect all faces using the updated (masked) 
      * frame. That way, only new detections would happen
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 
       for (auto& r : rects)
       {
-        tm.AddNewTrackingContext(frame, r);
+        ot.AddNewTrackingContext(frame, r);
       }
     }
 

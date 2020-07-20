@@ -20,3 +20,11 @@ for CUDA_ARCH_BIN, check the make of the gfx card using nvidia-smi or devmgmt.ms
 cmake --build . --target install --config debug
 
 set path=%path%;C:\opencv\build\bin\Debug
+
+#dlib
+
+cmake .. -DUSE_AVX_INSTRUCTIONS=1 -DDLIB_NO_GUI_SUPPORT=0
+
+for building dlib's gui webcam sample
+
+set OPENCV_DIR=C:\opencv\build\install

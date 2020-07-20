@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 {
   _putenv_s("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp");
 
-  Source s("f:/my.mp4");
+  Source s("f:/tv2.mp4");
 
   if(!s.isOpened())
   {
@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-  auto detector = FaceDetector();
+  auto detector = ObjectDetector();
 
   cv::Mat frame;
 
@@ -57,21 +57,26 @@ int main(int argc, char *argv[])
       cvtColor(frame, frame, cv::COLOR_BGRA2BGR);
     }
 
+    cv::line(frame, cv::Point(0, frame.rows/2), cv::Point(frame.cols, frame.rows/2), cv::Scalar(0, 0, 255), 1);
+
+    cv::Mat temp = frame.clone();
     /*
      * update all active trackers first
      */
-    ot.Update(frame);
+    ot.UpdateTrackingContexts(temp);
+
+    ot.DisplayTrackingContexts(frame);
     /*
      * Now detect all faces using the updated (masked) 
      * frame. That way, only new detections would happen
      */
     if (s.GetCurrentOffset() % 4 == 0)
     {
-      auto rects = detector.Detect(frame);
+      auto rects = detector.Detect(temp);
 
       for (auto& r : rects)
       {
-        ot.AddNewTrackingContext(frame, r);
+        ot.AddNewTrackingContext(temp, r);
       }
     }
 

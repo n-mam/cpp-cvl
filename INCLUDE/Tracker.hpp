@@ -13,9 +13,9 @@
 
 struct TrackinContext
 {
-  cv::Ptr<cv::Tracker> iTracker;  // cv tracker
-  dlib::correlation_tracker tracker; //dlib tracker
-  std::vector<cv::Rect2d> iBBTrail;  // last bb
+  cv::Ptr<cv::Tracker>      iTracker;  // cv tracker
+  std::vector<cv::Rect2d>   iBBTrail;  // last bb
+  dlib::correlation_tracker tracker;   //dlib tracker
 };
 
 class TrackingManager
@@ -41,50 +41,28 @@ class TrackingManager
       iTrackingContexts.clear();
     }
 
+    void DisplayTrackingContexts(cv::Mat& m)
+    {
+      for (auto& tc : iTrackingContexts)
+      {
+        for (int i = 1; i < tc.iBBTrail.size() - 1; i++)
+        {
+          auto f = GetRectCenter(tc.iBBTrail[i]);
+          auto b = GetRectCenter(tc.iBBTrail[i - 1]);
+          cv::line(m, f, b, cv::Scalar(0, 255, 0), 1);
+        }
+
+        cv::rectangle(m, tc.iBBTrail.back(), cv::Scalar(255, 0, 0 ), 1, 1);
+      }
+    }
+
     virtual void AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& r) {}
 
-    virtual void Update(const cv::Mat& frame) {}
+    virtual void UpdateTrackingContexts(const cv::Mat& frame) {}
 
   protected:
 
     std::vector<TrackinContext> iTrackingContexts;
-};
-
-class DlibTracker : public TrackingManager
-{
-  public:
-
-    void AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& r) override
-    {
-      TrackinContext tc;
-
-      tc.iBBTrail.push_back(r);
-//dlib::bgr_pixel
-      dlib::array2d<dlib::bgr_pixel> img;
-      dlib::assign_image(img, dlib::cv_image<dlib::bgr_pixel>(m));
-
-      tc.tracker.start_track(img, dlib::centered_rect(dlib::point(r.x, r.y), r.width, r.height));
-
-      iTrackingContexts.push_back(tc);
-    }
-
-    void Update(const cv::Mat& m) override
-    {
-      if (!iTrackingContexts.size()) return;
-
-      for (int i = (iTrackingContexts.size() - 1); i >= 0; i--)
-      {
-        auto& tc = iTrackingContexts[i];
-
-        dlib::array2d<dlib::bgr_pixel> img;
-        dlib::assign_image(img, dlib::cv_image<dlib::bgr_pixel>(m));
-
-        tc.tracker.update(img);
-      }
-    }
-
-  protected:
-
 };
 
 class OpenCVTracker : public TrackingManager
@@ -104,7 +82,7 @@ class OpenCVTracker : public TrackingManager
       iTrackingContexts.push_back(tc);
     }
 
-    void Update(const cv::Mat& frame) override
+    void UpdateTrackingContexts(const cv::Mat& m) override
     {
       if (!iTrackingContexts.size()) return;
 
@@ -114,25 +92,18 @@ class OpenCVTracker : public TrackingManager
 
         cv::Rect2d bb;
 
-        bool fRet = tc.iTracker->update(frame, bb);
+        bool fRet = tc.iTracker->update(m, bb);
 
         if (fRet)
         {
-          if (IsRectInsideMat(bb, frame))
+          if (IsRectInsideMat(bb, m))
           {
+            m(bb) = 1;
             tc.iBBTrail.push_back(bb);
-
-            for(auto& b : tc.iBBTrail)
-            {
-              cv::circle(frame, b.br(), 1, cv::Scalar(255,0,0));
-            }
-
-            cv::rectangle(frame, bb, cv::Scalar(255, 0, 0 ), -1, 1);
           }
           else
           {
             iTrackingContexts.erase(iTrackingContexts.begin() + i);
-
             std::cout << "Tracker at " << i << " out of bound, size : " << iTrackingContexts.size() << "\n";
           }
         }
@@ -149,5 +120,41 @@ class OpenCVTracker : public TrackingManager
 
 };
 
+class DlibTracker : public TrackingManager
+{
+  public:
+
+    void AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& r) override
+    {
+      TrackinContext tc;
+
+      tc.iBBTrail.push_back(r);
+
+      dlib::array2d<dlib::bgr_pixel> img;
+      dlib::assign_image(img, dlib::cv_image<dlib::bgr_pixel>(m));
+
+      tc.tracker.start_track(img, dlib::centered_rect(dlib::point(r.x, r.y), r.width, r.height));
+
+      iTrackingContexts.push_back(tc);
+    }
+
+    void UpdateTrackingContexts(const cv::Mat& m) override
+    {
+      if (!iTrackingContexts.size()) return;
+
+      for (int i = (iTrackingContexts.size() - 1); i >= 0; i--)
+      {
+        auto& tc = iTrackingContexts[i];
+
+        dlib::array2d<dlib::bgr_pixel> img;
+        dlib::assign_image(img, dlib::cv_image<dlib::bgr_pixel>(m));
+
+        tc.tracker.update(img);
+      }
+    }
+
+  protected:
+
+};
 
 #endif //TRACKER_HPP

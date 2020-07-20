@@ -21,6 +21,10 @@ bool DoesRectOverlapRect(const cv::Rect2d& r1, const cv::Rect2d& r2)
   return (((static_cast<cv::Rect>(r1) & static_cast<cv::Rect>(r2))).area() > 0);
 }
 
+cv::Point GetRectCenter(const cv::Rect2d& r)
+{
+  return ((r.br() + r.tl()) * 0.5);
+}
 
 #endif
 

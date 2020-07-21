@@ -3,14 +3,14 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/dnn.hpp>
 
+#include <Camera.hpp>
 #include <Common.hpp>
 #include <Source.hpp>
 #include <Tracker.hpp>
 #include <Detector.hpp>
 
-uint64_t people = 0;
-
-OpenCVTracker ot;
+int up = 0;
+int down = 0;
 
 int main(int argc, char *argv[])
 {
@@ -25,6 +25,7 @@ int main(int argc, char *argv[])
   }
 
   auto detector = ObjectDetector();
+  auto tracker = OpenCVTracker();
 
   cv::Mat frame;
 
@@ -35,8 +36,8 @@ int main(int argc, char *argv[])
       if(s.HasEnded())
       {
         s.Rewind();
-        ot.ClearAllContexts();
-        people = 0;
+        up = down = 0;
+        tracker.ClearAllContexts();        
         continue;
       }
       else
@@ -62,9 +63,32 @@ int main(int argc, char *argv[])
     /*
      * update all active trackers first
      */
-    ot.UpdateTrackingContexts(temp);
+    tracker.UpdateTrackingContexts(temp,
+      [&frame](auto& tc)
+      {
+        bool fRet = false;
 
-    ot.DisplayTrackingContexts(frame);
+        auto start = GetRectCenter(tc.iTrail.front());
+        auto end = GetRectCenter(tc.iTrail.back());
+
+        auto refy = frame.rows / 2;
+
+        std::cout << "start : " << start.y << " end :" << end.y << "\n";
+
+        if ((start.y < refy) && (end.y >= refy))
+        {
+          down++, fRet = true;
+        }
+        else if ((start.y > refy) && (end.y <= refy))
+        {
+          up++, fRet = true;
+        }
+
+        return fRet;
+      }
+    );
+
+    tracker.RenderTrackingContexts(frame);
     /*
      * run detector now using the updated (masked) frame 
      * That way, only new detections would be reported
@@ -75,11 +99,12 @@ int main(int argc, char *argv[])
 
       for (auto& r : rects)
       {
-        ot.AddNewTrackingContext(temp, r);
+        tracker.AddNewTrackingContext(temp, r);
       }
     }
 
-    cv::putText(frame, std::to_string(people), cv::Point(5, 20), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
+    cv::putText(frame, "d : " + std::to_string(down), cv::Point(5, 20), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
+    cv::putText(frame, "u : " + std::to_string(up), cv::Point(5, 40), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
 
 	  cv::imshow("People Counting", frame);
 

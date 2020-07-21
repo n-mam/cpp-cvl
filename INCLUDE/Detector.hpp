@@ -125,13 +125,18 @@ class ObjectDetector : public Detector
 
         if (confidence > 0.7)
         {
-          int idx = static_cast<int>(detectionMat.at<float>(i, 1));
-          int x1 = static_cast<int>(detectionMat.at<float>(i, 3) * frame.cols);
-          int y1 = static_cast<int>(detectionMat.at<float>(i, 4) * frame.rows);
-          int x2 = static_cast<int>(detectionMat.at<float>(i, 5) * frame.cols);
-          int y2 = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
+          int idx, x1, y1, x2, y2;
 
-          out.emplace_back(cv::Point(x1, y1), cv::Point(x2, y2));
+          idx = static_cast<int>(detectionMat.at<float>(i, 1));
+
+          if (iObjectClass[idx] == "person")
+          {
+            x1 = static_cast<int>(detectionMat.at<float>(i, 3) * frame.cols);
+            y1 = static_cast<int>(detectionMat.at<float>(i, 4) * frame.rows);
+            x2 = static_cast<int>(detectionMat.at<float>(i, 5) * frame.cols);
+            y2 = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
+            out.emplace_back(cv::Point(x1, y1), cv::Point(x2, y2));
+          }
 
           std::cout << "Object(" + iObjectClass[idx] + ") detected at " << x1 << "," << y1 << "[" << x2 - x1 << "," << y2 - y1 << "]\n";
         }
@@ -142,11 +147,12 @@ class ObjectDetector : public Detector
 
   protected:
 
-    std::string iObjectClass[21] = {
+    std::string iObjectClass[21] = 
+    {
       "background", "aeroplane", "bicycle", "bird", "boat",
-	  "bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
-	  "dog", "horse", "motorbike", "person", "pottedplant", "sheep",
-	  "sofa", "train", "tvmonitor"
+	    "bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
+	    "dog", "horse", "motorbike", "person", "pottedplant", "sheep",
+	    "sofa", "train", "tvmonitor"
     };
 };
 

@@ -2,17 +2,21 @@
 #define TRACKER_HPP 
 
 #include <vector>
+#include <functional>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/tracking/tracking.hpp>
 
 #include <Common.hpp>
 
-struct TrackinContext
+struct TrackingContext
 {
   cv::Ptr<cv::Tracker>      iTracker;  // cv tracker
   std::vector<cv::Rect2d>   iTrail;    // last bb
+  bool iSkip;
 };
+
+using TCbkTracker = std::function<bool (const TrackingContext&)>;
 
 class TrackingManager
 {
@@ -37,7 +41,7 @@ class TrackingManager
       iTrackingContexts.clear();
     }
 
-    void DisplayTrackingContexts(cv::Mat& m)
+    void RenderTrackingContexts(cv::Mat& m)
     {
       for (auto& tc : iTrackingContexts)
       {
@@ -54,11 +58,11 @@ class TrackingManager
 
     virtual void AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& r) {}
 
-    virtual void UpdateTrackingContexts(const cv::Mat& frame) {}
+    virtual void UpdateTrackingContexts(const cv::Mat& frame, TCbkTracker cbk = nullptr) {}
 
   protected:
 
-    std::vector<TrackinContext> iTrackingContexts;
+    std::vector<TrackingContext> iTrackingContexts;
 };
 
 class OpenCVTracker : public TrackingManager
@@ -67,7 +71,7 @@ class OpenCVTracker : public TrackingManager
 
     void AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& r) override
     {
-      TrackinContext tc;
+      TrackingContext tc;
 
       tc.iTracker = cv::TrackerCSRT::create();
 
@@ -78,7 +82,7 @@ class OpenCVTracker : public TrackingManager
       iTrackingContexts.push_back(tc);
     }
 
-    void UpdateTrackingContexts(const cv::Mat& m) override
+    void UpdateTrackingContexts(const cv::Mat& m, TCbkTracker cbk = nullptr) override
     {
       if (!iTrackingContexts.size()) return;
 
@@ -95,7 +99,13 @@ class OpenCVTracker : public TrackingManager
           if (IsRectInsideMat(bb, m))
           {
             m(bb) = 1;
+
             tc.iTrail.push_back(bb);
+
+            if (cbk && !tc.iSkip)
+            {
+              tc.iSkip = cbk(tc);
+            }
           }
           else
           {
@@ -106,7 +116,6 @@ class OpenCVTracker : public TrackingManager
         else
         {
           iTrackingContexts.erase(iTrackingContexts.begin() + i);
-
           std::cout << "Tracker at " << i << " lost, size : " << iTrackingContexts.size() << "\n";
         }
       }

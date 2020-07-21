@@ -1,7 +1,5 @@
 project (cpp-cvl)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
-
 link_directories(
   C:/opencv/build/lib/Release
 )
@@ -12,6 +10,10 @@ ADD_EXECUTABLE(
 )
 
 SET_PROPERTY(TARGET counter PROPERTY CXX_STANDARD 17)
+
+SET_TARGET_PROPERTIES(counter PROPERTIES 
+  LINK_FLAGS "/INCREMENTAL:NO /DEBUG /OPT:REF /OPT:ICF"
+)
 
 TARGET_INCLUDE_DIRECTORIES(
  counter

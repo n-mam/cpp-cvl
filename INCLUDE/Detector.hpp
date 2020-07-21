@@ -136,9 +136,8 @@ class ObjectDetector : public Detector
             x2 = static_cast<int>(detectionMat.at<float>(i, 5) * frame.cols);
             y2 = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
             out.emplace_back(cv::Point(x1, y1), cv::Point(x2, y2));
-          }
-
-          std::cout << "Object(" + iObjectClass[idx] + ") detected at " << x1 << "," << y1 << "[" << x2 - x1 << "," << y2 - y1 << "]\n";
+            std::cout << "Object(" + iObjectClass[idx] + ") detected at " << x1 << "," << y1 << "[" << x2 - x1 << "," << y2 - y1 << "]\n";
+          }      
         }
       }
 

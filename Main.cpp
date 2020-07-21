@@ -16,7 +16,9 @@ int main(int argc, char *argv[])
 {
   _putenv_s("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp");
 
-  Source s("f:/overpass.mp4");
+  if (!argv[1]) return 0;
+
+  Source s(argv[1]);
 
   if(!s.isOpened())
   {

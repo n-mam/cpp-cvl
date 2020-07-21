@@ -6,16 +6,12 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/tracking/tracking.hpp>
 
-#include <dlib/opencv.h>
-#include <dlib/image_processing.h>
-
 #include <Common.hpp>
 
 struct TrackinContext
 {
   cv::Ptr<cv::Tracker>      iTracker;  // cv tracker
   std::vector<cv::Rect2d>   iBBTrail;  // last bb
-  dlib::correlation_tracker tracker;   //dlib tracker
 };
 
 class TrackingManager
@@ -113,43 +109,6 @@ class OpenCVTracker : public TrackingManager
 
           std::cout << "Tracker at " << i << " lost, size : " << iTrackingContexts.size() << "\n";
         }
-      }
-    }
-
-  protected:
-
-};
-
-class DlibTracker : public TrackingManager
-{
-  public:
-
-    void AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& r) override
-    {
-      TrackinContext tc;
-
-      tc.iBBTrail.push_back(r);
-
-      dlib::array2d<dlib::bgr_pixel> img;
-      dlib::assign_image(img, dlib::cv_image<dlib::bgr_pixel>(m));
-
-      tc.tracker.start_track(img, dlib::centered_rect(dlib::point(r.x, r.y), r.width, r.height));
-
-      iTrackingContexts.push_back(tc);
-    }
-
-    void UpdateTrackingContexts(const cv::Mat& m) override
-    {
-      if (!iTrackingContexts.size()) return;
-
-      for (int i = (iTrackingContexts.size() - 1); i >= 0; i--)
-      {
-        auto& tc = iTrackingContexts[i];
-
-        dlib::array2d<dlib::bgr_pixel> img;
-        dlib::assign_image(img, dlib::cv_image<dlib::bgr_pixel>(m));
-
-        tc.tracker.update(img);
       }
     }
 

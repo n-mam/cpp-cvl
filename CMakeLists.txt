@@ -11,13 +11,7 @@ ADD_EXECUTABLE(
   Main.cpp 
 )
 
-ADD_EXECUTABLE(
-  mocap 
-  Mocap.cpp 
-)
-
 SET_PROPERTY(TARGET counter PROPERTY CXX_STANDARD 17)
-SET_PROPERTY(TARGET mocap PROPERTY CXX_STANDARD 17)
 
 TARGET_INCLUDE_DIRECTORIES(
  counter
@@ -26,12 +20,4 @@ TARGET_INCLUDE_DIRECTORIES(
  C:/opencv/build/install/include
 )
 
-TARGET_INCLUDE_DIRECTORIES(
- mocap
- PRIVATE
- INCLUDE
- C:/opencv/build/install/include
-)
-
 TARGET_LINK_LIBRARIES(counter opencv_world440)
-TARGET_LINK_LIBRARIES(mocap opencv_world440) 

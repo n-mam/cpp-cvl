@@ -48,7 +48,6 @@ int main(int argc, char *argv[])
     if (frame.cols > 600)
     {
       auto scale = (float) 600 / frame.cols;
-
       cv::resize(frame, frame, cv::Size(0, 0), scale, scale);
     }
 
@@ -67,8 +66,8 @@ int main(int argc, char *argv[])
 
     ot.DisplayTrackingContexts(frame);
     /*
-     * Now detect all faces using the updated (masked) 
-     * frame. That way, only new detections would happen
+     * run detector now using the updated (masked) frame 
+     * That way, only new detections would be reported
      */
     if (s.GetCurrentOffset() % 4 == 0)
     {

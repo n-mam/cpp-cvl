@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "DNN",
+            "name": "Counter",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/release/Counter.exe",
+            "program": "${workspaceFolder}/build/Release/counter.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",

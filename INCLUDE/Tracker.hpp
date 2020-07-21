@@ -13,7 +13,7 @@ struct TrackingContext
 {
   cv::Ptr<cv::Tracker>      iTracker;  // cv tracker
   std::vector<cv::Rect2d>   iTrail;    // last bb
-  bool iSkip;
+  bool iSkip = false;
 };
 
 using TCbkTracker = std::function<bool (const TrackingContext&)>;

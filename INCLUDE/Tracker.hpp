@@ -11,7 +11,7 @@
 struct TrackinContext
 {
   cv::Ptr<cv::Tracker>      iTracker;  // cv tracker
-  std::vector<cv::Rect2d>   iBBTrail;  // last bb
+  std::vector<cv::Rect2d>   iTrail;    // last bb
 };
 
 class TrackingManager
@@ -41,14 +41,14 @@ class TrackingManager
     {
       for (auto& tc : iTrackingContexts)
       {
-        for (int i = 1; i < tc.iBBTrail.size() - 1; i++)
+        for (int i = 1; i < tc.iTrail.size() - 1; i++)
         {
-          auto f = GetRectCenter(tc.iBBTrail[i]);
-          auto b = GetRectCenter(tc.iBBTrail[i - 1]);
+          auto f = GetRectCenter(tc.iTrail[i]);
+          auto b = GetRectCenter(tc.iTrail[i-1]);
           cv::line(m, f, b, cv::Scalar(0, 255, 0), 1);
         }
 
-        cv::rectangle(m, tc.iBBTrail.back(), cv::Scalar(255, 0, 0 ), 1, 1);
+        cv::rectangle(m, tc.iTrail.back(), cv::Scalar(255, 0, 0 ), 1, 1);
       }
     }
 
@@ -71,7 +71,7 @@ class OpenCVTracker : public TrackingManager
 
       tc.iTracker = cv::TrackerCSRT::create();
 
-      tc.iBBTrail.push_back(r);
+      tc.iTrail.push_back(r);
 
       tc.iTracker->init(m, r);
 
@@ -95,7 +95,7 @@ class OpenCVTracker : public TrackingManager
           if (IsRectInsideMat(bb, m))
           {
             m(bb) = 1;
-            tc.iBBTrail.push_back(bb);
+            tc.iTrail.push_back(bb);
           }
           else
           {

@@ -3,7 +3,7 @@ project (cpp-cvl)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
 
 link_directories(
-  C:/opencv/build/lib/Debug
+  C:/opencv/build/lib/Release
 )
 
 ADD_EXECUTABLE(
@@ -33,5 +33,5 @@ TARGET_INCLUDE_DIRECTORIES(
  C:/opencv/build/install/include
 )
 
-TARGET_LINK_LIBRARIES(counter opencv_world440d)
-TARGET_LINK_LIBRARIES(mocap opencv_world440d) 
+TARGET_LINK_LIBRARIES(counter opencv_world440)
+TARGET_LINK_LIBRARIES(mocap opencv_world440) 

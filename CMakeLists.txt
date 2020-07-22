@@ -5,22 +5,22 @@ link_directories(
 )
 
 ADD_EXECUTABLE(
-  counter
-  Main.cpp 
+  Test
+  Test.cpp 
 )
 
-SET_PROPERTY(TARGET counter PROPERTY CXX_STANDARD 17)
+SET_PROPERTY(TARGET Test PROPERTY CXX_STANDARD 17)
 
 SET (CMAKE_CXX_FLAGS "/Zi /Od")
-SET_TARGET_PROPERTIES(counter PROPERTIES 
+SET_TARGET_PROPERTIES(Test PROPERTIES 
   LINK_FLAGS "/DEBUG /OPT:REF /OPT:ICF"
 )
 
 TARGET_INCLUDE_DIRECTORIES(
- counter
+ Test
  PRIVATE
  INCLUDE
  C:/opencv/build/install/include
 )
 
-TARGET_LINK_LIBRARIES(counter opencv_world440)
+TARGET_LINK_LIBRARIES(Test opencv_world440)

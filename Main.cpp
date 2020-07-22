@@ -75,15 +75,15 @@ int main(int argc, char *argv[])
 
         auto refy = frame.rows / 2;
 
-        std::cout << "start : " << start.y << " end :" << end.y << "\n";
-
         if ((start.y < refy) && (end.y >= refy))
         {
           down++, fRet = true;
+          std::cout << "start-y : " << start.y << " end-y : " << end.y << ", down\n";
         }
         else if ((start.y > refy) && (end.y <= refy))
         {
           up++, fRet = true;
+          std::cout << "start-y : " << start.y << " end-y : " << end.y << ", up\n";          
         }
 
         return fRet;

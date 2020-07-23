@@ -2,6 +2,7 @@
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/dnn.hpp>
+#include <opencv2/highgui.hpp>
 
 #include <Camera.hpp>
 #include <Common.hpp>
@@ -11,14 +12,25 @@
 
 int up = 0;
 int down = 0;
+int left = 0;
+int right = 0;
 
 int main(int argc, char *argv[])
 {
   _putenv_s("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;udp");
 
-  if (!argv[1]) return 0;
+  std::string source;
 
-  Source s(argv[1]);
+  if (argv[1])
+  {
+    source = argv[1];
+  }
+  else
+  {
+    source = "rtsp://neelabh.mam:welcome123@10.0.0.4:554/stream2";
+  }
+
+  Source s(source);
 
   if(!s.isOpened())
   {
@@ -38,7 +50,7 @@ int main(int argc, char *argv[])
       if(s.HasEnded())
       {
         s.Rewind();
-        up = down = 0;
+        up = down = left = right = 0;
         tracker.ClearAllContexts();        
         continue;
       }
@@ -59,38 +71,30 @@ int main(int argc, char *argv[])
       cvtColor(frame, frame, cv::COLOR_BGRA2BGR);
     }
 
-    cv::line(frame, cv::Point(0, frame.rows/2), cv::Point(frame.cols, frame.rows/2), cv::Scalar(0, 0, 255), 1);
-
     cv::Mat temp = frame.clone();
     /*
      * update all active trackers first
      */
     tracker.UpdateTrackingContexts(temp,
-      [&frame](auto& tc)
+      [&frame, &s](auto& tc)
       {
-        bool fRet = false;
-
         auto start = GetRectCenter(tc.iTrail.front());
         auto end = GetRectCenter(tc.iTrail.back());
+        auto [u, d, l, r] = s.IsPathIntersectingRefLine(start, end, frame);
 
-        auto refy = frame.rows / 2;
-
-        if ((start.y < refy) && (end.y >= refy))
+        if (u || d || l || r)
         {
-          down++, fRet = true;
-          std::cout << "start-y : " << start.y << " end-y : " << end.y << ", down\n";
-        }
-        else if ((start.y > refy) && (end.y <= refy))
-        {
-          up++, fRet = true;
-          std::cout << "start-y : " << start.y << " end-y : " << end.y << ", up\n";          
+          up += u;
+          down += d;
+          left += l;
+          right += r;
+          return true;
         }
 
-        return fRet;
+        return false;
       }
     );
 
-    tracker.RenderTrackingContexts(frame);
     /*
      * run detector now using the updated (masked) frame 
      * That way, only new detections would be reported
@@ -105,8 +109,14 @@ int main(int argc, char *argv[])
       }
     }
 
-    cv::putText(frame, "d : " + std::to_string(down), cv::Point(5, 20), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
-    cv::putText(frame, "u : " + std::to_string(up), cv::Point(5, 40), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
+    tracker.RenderTrackingContextsPath(frame);
+    tracker.RenderTrackingContextsDisplacement(frame);
+    
+    cv::putText(frame, "u : " + std::to_string(up), cv::Point(5, 30), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
+    cv::putText(frame, "d : " + std::to_string(down), cv::Point(5, 50), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
+    cv::putText(frame, "l : " + std::to_string(left), cv::Point(5, 70), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
+    cv::putText(frame, "r : " + std::to_string(right), cv::Point(5, 90), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
+    cv::line(frame, s.GetRefStartPoint(frame), s.GetRefEndPoint(frame), cv::Scalar(0, 0, 255), 1);
 
 	  cv::imshow("People Counting", frame);
 

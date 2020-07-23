@@ -8,7 +8,7 @@
             "name": "Counter",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/Release/counter.exe",
+            "program": "${workspaceFolder}/build/Release/Test.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",

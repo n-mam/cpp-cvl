@@ -41,7 +41,23 @@ class TrackingManager
       iTrackingContexts.clear();
     }
 
-    void RenderTrackingContexts(cv::Mat& m)
+    void RenderTrackingContextsDisplacement(cv::Mat& m)
+    {
+      for (auto& tc : iTrackingContexts)
+      {
+        auto first = GetRectCenter(tc.iTrail.front());
+        auto last = GetRectCenter(tc.iTrail.back());
+        cv::line(m, first, last, cv::Scalar(0, 0, 255), 1);
+      }
+      for (auto& pc : iPurgedContexts)
+      {
+        auto first = GetRectCenter(pc.iTrail.front());
+        auto last = GetRectCenter(pc.iTrail.back());
+        cv::line(m, first, last, cv::Scalar(0, 0, 255), 1);
+      }
+    }
+
+    void RenderTrackingContextsPath(cv::Mat& m)
     {
       for (auto& tc : iTrackingContexts)
       {
@@ -63,6 +79,7 @@ class TrackingManager
   protected:
 
     std::vector<TrackingContext> iTrackingContexts;
+    std::vector<TrackingContext> iPurgedContexts;
 };
 
 class OpenCVTracker : public TrackingManager
@@ -115,6 +132,7 @@ class OpenCVTracker : public TrackingManager
         }
         else
         {
+          iPurgedContexts.push_back(tc);
           iTrackingContexts.erase(iTrackingContexts.begin() + i);
           std::cout << "Tracker at " << i << " lost, size : " << iTrackingContexts.size() << "\n";
         }

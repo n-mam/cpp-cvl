@@ -26,5 +26,10 @@ cv::Point GetRectCenter(const cv::Rect2d& r)
   return ((r.br() + r.tl()) * 0.5);
 }
 
+bool DoesIntersectReferenceLine(cv::Point start, cv::Point end, int refx, int refy)
+{
+  return false;
+}
+
 #endif
 

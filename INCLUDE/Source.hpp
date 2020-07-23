@@ -96,6 +96,18 @@ class Source
             iCapture.set(cv::CAP_PROP_POS_FRAMES, iCurrentOffset = offset);
           }
         }
+        else if (c == 'a' || c == 'd')
+        {
+          iRefOrientation = 0;
+          if (c == 'a') iRefDelta -= 10;
+          if (c == 'd') iRefDelta += 10; 
+        }
+        else if (c == 'w' || c == 's')
+        {
+          iRefOrientation = 1;
+          if (c == 'w') iRefDelta -= 10;
+          if (c == 's') iRefDelta += 10; 
+        }
         else if (c == 'q' || c == 'Q')
         {
           fRet = false;
@@ -103,6 +115,72 @@ class Source
       }
 
       return fRet;
+    }
+
+    cv::Point GetRefStartPoint(cv::Mat& m)
+    {
+      if (iRefOrientation)
+      {/*
+        * horizontal
+        */
+        return cv::Point(0, m.rows/2 + iRefDelta);
+      }
+      else
+      {
+        return cv::Point(m.cols/2 + iRefDelta, 0);
+      }
+    }
+
+    cv::Point GetRefEndPoint(cv::Mat& m)
+    {
+      if (iRefOrientation)
+      {/*
+        * horizontal
+        */
+        return cv::Point(m.cols, m.rows/2 + iRefDelta);
+      }
+      else
+      {
+        return cv::Point(m.cols/2 + iRefDelta, m.rows);
+      }
+    }
+
+    std::tuple<int, int, int, int> IsPathIntersectingRefLine(cv::Point start, cv::Point end, cv::Mat& m)
+    {
+      int u = 0, d = 0, l = 0, r = 0;
+
+      if (iRefOrientation)
+      {
+        auto refy = m.rows/2 + iRefDelta;
+
+        if ((start.y < refy) && (end.y >= refy))
+        {
+          d++;
+          std::cout << "start-y : " << start.y << " end-y : " << end.y << ", down\n";
+        }
+        else if ((start.y > refy) && (end.y <= refy))
+        {
+          u++;
+          std::cout << "start-y : " << start.y << " end-y : " << end.y << ", up\n";          
+        }
+      }
+      else
+      {
+        auto refx = m.cols/2 + iRefDelta;
+
+        if ((start.x < refx) && (end.x >= refx))
+        {
+          r++;
+          std::cout << "start-x : " << start.x << " end-x : " << end.x << ", right\n";
+        }
+        else if ((start.x > refx) && (end.x <= refx))
+        {
+          l++;
+          std::cout << "start-x : " << start.x << " end-x : " << end.x << ", left\n";          
+        }
+      }
+
+      return std::make_tuple(u, d, l, r);
     }
 
   protected:
@@ -115,6 +193,9 @@ class Source
 
     size_t iCurrentOffset = 0;
 
+    char iRefOrientation = 1; // horizontal
+
+    int iRefDelta = 0; // ref line offset from baseline
 };
 
 #endif

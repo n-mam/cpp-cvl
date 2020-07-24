@@ -89,6 +89,18 @@ class TrackingManager
       }
     }
 
+    bool DoesROIOverlapAnyContext(cv::Rect2d roi)
+    {
+      for (auto& tc : iTrackingContexts)
+      {
+        if (DoesRectOverlapRect(roi, tc.iTrail.back()))
+        {
+          return true;
+        }
+      }
+      return false;
+    }
+
     virtual void AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& r) {}
 
     virtual void UpdateTrackingContexts(const cv::Mat& frame, TCbkTracker cbk = nullptr) {}
@@ -146,8 +158,6 @@ class OpenCVTracker : public TrackingManager
         {
           if (IsRectInsideMat(bb, m))
           {
-            m(bb) = 1;
-
             tc.iTrail.push_back(bb);
 
             if (cbk && !tc.iSkip)

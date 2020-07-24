@@ -97,26 +97,31 @@ int main(int argc, char *argv[])
     );
 
     /*
-     * run detector now using the updated (masked) frame 
-     * That way, only new detections would be reported
+     * run the detector and filter out 
+     * tracker updated overlapping rois
      */
-    if (s.GetCurrentOffset() % 4 == 0)
-    {
-      auto rects = detector.Detect(temp);
+    auto detections = detector.Detect(temp);
 
-      for (auto& r : rects)
+    for (int i = (detections.size() - 1); detections.size() && i >= 0; i--)
+    {
+      if (tracker.DoesROIOverlapAnyContext(detections[i]))
       {
-        tracker.AddNewTrackingContext(temp, r);
+        detections.erase(detections.begin() + i);       
       }
+    }
+
+    for (auto& roi : detections)
+    {
+      tracker.AddNewTrackingContext(temp, roi);
     }
 
     tracker.RenderTrackingContextsPath(frame);
     tracker.RenderTrackingContextsDisplacement(frame);
 
-    cv::putText(frame, "u : " + std::to_string(up), cv::Point(5, 30), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
-    cv::putText(frame, "d : " + std::to_string(down), cv::Point(5, 50), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
-    cv::putText(frame, "l : " + std::to_string(left), cv::Point(5, 70), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
-    cv::putText(frame, "r : " + std::to_string(right), cv::Point(5, 90), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
+    cv::putText(frame, "u : " + std::to_string(up), cv::Point(5, 30), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 0, 0), 1);
+    cv::putText(frame, "d : " + std::to_string(down), cv::Point(5, 50), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 0, 0), 1);
+    cv::putText(frame, "l : " + std::to_string(left), cv::Point(5, 70), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 0, 0), 1);
+    cv::putText(frame, "r : " + std::to_string(right), cv::Point(5, 90), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 0, 0), 1);
     
     cv::line(frame, s.GetRefStartPoint(frame), s.GetRefEndPoint(frame), cv::Scalar(0, 0, 255), 1);
 

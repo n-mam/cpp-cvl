@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
   }
   else
   {
-    source = "rtsp://neelabh.mam:welcome123@10.0.0.4:554/stream2";
+    source = "rtsp://neelabh.mam:welcome123@10.0.0.3:554/stream2";
   }
 
   Source s(source);
@@ -117,6 +117,7 @@ int main(int argc, char *argv[])
     cv::putText(frame, "d : " + std::to_string(down), cv::Point(5, 50), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
     cv::putText(frame, "l : " + std::to_string(left), cv::Point(5, 70), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
     cv::putText(frame, "r : " + std::to_string(right), cv::Point(5, 90), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
+    
     cv::line(frame, s.GetRefStartPoint(frame), s.GetRefEndPoint(frame), cv::Scalar(0, 0, 255), 1);
 
 	  cv::imshow("People Counting", frame);

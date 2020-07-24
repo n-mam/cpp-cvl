@@ -26,6 +26,14 @@ cv::Point GetRectCenter(const cv::Rect2d& r)
   return ((r.br() + r.tl()) * 0.5);
 }
 
+double Distance(cv::Point p1, cv::Point p2) //double x1, double y1, double x2, double y2)
+{
+  double x = p1.x - p2.x;
+  double y = p1.y - p2.y;
+  double dist = sqrt((x * x) + (y * y));
+  return dist;
+}
+
 bool DoesIntersectReferenceLine(cv::Point start, cv::Point end, int refx, int refy)
 {
   return false;

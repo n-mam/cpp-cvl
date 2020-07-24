@@ -14,6 +14,23 @@ struct TrackingContext
   cv::Ptr<cv::Tracker>      iTracker;  // cv tracker
   std::vector<cv::Rect2d>   iTrail;    // last bb
   bool iSkip = false;
+
+  bool IsFrozen(void)
+  {
+    bool fRet = false;
+
+    if (iTrail.size() >= 8)
+    {
+      auto& last = iTrail[iTrail.size() - 1];
+      auto& prev = iTrail[iTrail.size() - 8];
+
+      auto d = Distance(GetRectCenter(last), GetRectCenter(prev));
+
+      if (d <= 2) fRet = true;
+    }
+
+    return fRet;
+  }
 };
 
 using TCbkTracker = std::function<bool (const TrackingContext&)>;
@@ -86,15 +103,21 @@ class OpenCVTracker : public TrackingManager
 {
   public:
 
-    void AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& r) override
+    void AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& roi) override
     {
       TrackingContext tc;
 
-      tc.iTracker = cv::TrackerCSRT::create();
+      cv::TrackerCSRT::Params params;
+      params.psr_threshold = 0.04f;
 
-      tc.iTrail.push_back(r);
+      tc.iTracker = cv::TrackerCSRT::create(params);
 
-      tc.iTracker->init(m, r);
+      tc.iTrail.push_back(roi);
+
+      if (roi.x + roi.width > m.cols) return; //roi.width -= m.cols - roi.x;
+      if (roi.y + roi.height > m.rows) return; //roi.height -= m.rows - roi.y;
+
+      tc.iTracker->init(m, roi);
 
       iTrackingContexts.push_back(tc);
     }
@@ -106,6 +129,14 @@ class OpenCVTracker : public TrackingManager
       for (int i = (iTrackingContexts.size() - 1); i >= 0; i--)
       {
         auto& tc = iTrackingContexts[i];
+
+        if (tc.IsFrozen())
+        {
+          iPurgedContexts.push_back(tc);
+          iTrackingContexts.erase(iTrackingContexts.begin() + i);          
+          std::cout << "removed frozen tc\n";
+          continue;
+        }
 
         cv::Rect2d bb;
 

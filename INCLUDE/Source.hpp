@@ -10,12 +10,12 @@ class Source
 
     Source(const std::string& s)
     {
-      iCapture = cv::VideoCapture(s.c_str()); 
+      iCapture = cv::VideoCapture(s.c_str());
     }
     
     Source(int c)
     {
-      iCapture = cv::VideoCapture(iCamera = c);
+      iCapture = cv::VideoCapture(iCamera = c); 
     }
 
     ~Source()
@@ -70,7 +70,7 @@ class Source
     {
       bool fRet = true;
 
-      int c = cv::waitKey(1);
+      int c = cv::waitKey(25);
 
       if(c >= 0)
       {

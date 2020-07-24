@@ -9,7 +9,7 @@
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/Release/Test.exe",
-            "args": [],
+            "args": ["f:\\road.mp4"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",
             "environment": [],

@@ -80,6 +80,7 @@ int main(int argc, char *argv[])
       {
         auto start = GetRectCenter(tc.iTrail.front());
         auto end = GetRectCenter(tc.iTrail.back());
+
         auto [u, d, l, r] = s.IsPathIntersectingRefLine(start, end, frame);
 
         if (u || d || l || r)
@@ -111,7 +112,7 @@ int main(int argc, char *argv[])
 
     tracker.RenderTrackingContextsPath(frame);
     tracker.RenderTrackingContextsDisplacement(frame);
-    
+
     cv::putText(frame, "u : " + std::to_string(up), cv::Point(5, 30), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
     cv::putText(frame, "d : " + std::to_string(down), cv::Point(5, 50), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);
     cv::putText(frame, "l : " + std::to_string(left), cv::Point(5, 70), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1);

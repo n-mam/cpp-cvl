@@ -53,7 +53,7 @@ class TrackingManager
       {
         auto first = GetRectCenter(pc.iTrail.front());
         auto last = GetRectCenter(pc.iTrail.back());
-        cv::line(m, first, last, cv::Scalar(0, 0, 255), 1);
+        cv::line(m, first, last, cv::Scalar(0, 255, 255), 1);
       }
     }
 
@@ -126,8 +126,9 @@ class OpenCVTracker : public TrackingManager
           }
           else
           {
+            iPurgedContexts.push_back(tc);
             iTrackingContexts.erase(iTrackingContexts.begin() + i);
-            std::cout << "Tracker at " << i << " out of bound, size : " << iTrackingContexts.size() << "\n";
+            std::cout << "Tracker at " << i << " is out of the bounds, size : " << iTrackingContexts.size() << "\n";
           }
         }
         else

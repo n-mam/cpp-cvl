@@ -183,6 +183,7 @@ class Source
       return std::make_tuple(u, d, l, r);
     }
 
+    
   protected:
 
     int iCamera = -1;

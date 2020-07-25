@@ -43,6 +43,8 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
     void Stop()
     {
+      iStop = true;
+
       if (iRunThread.joinable())
       {
         iRunThread.join();
@@ -53,7 +55,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
     {
       cv::Mat frame;
 
-      for (;;)
+      while (!iStop)
       {
         if (!iSource->Read(frame))
 	      {
@@ -125,11 +127,12 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
   protected:
 
-    SPCSource    iSource;
-    SPCTracker   iTracker;
-    SPCDetector  iDetector;
-    SPCCounter   iCounter;
-    std::thread  iRunThread;
+    SPCSource   iSource;
+    SPCTracker  iTracker;
+    SPCCounter  iCounter;
+    SPCDetector iDetector;    
+    std::thread iRunThread;
+    bool iStop = false;
 };
 
 using SPCCamera = std::shared_ptr<CCamera>;

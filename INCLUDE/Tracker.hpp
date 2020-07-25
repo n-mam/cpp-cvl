@@ -7,12 +7,12 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/tracking/tracking.hpp>
 
-#include <Common.hpp>
+#include <Geometry.hpp>
 
 struct TrackingContext
 {
   cv::Ptr<cv::Tracker>      iTracker;  // cv tracker
-  std::vector<cv::Rect2d>   iTrail;    // last bb
+  std::vector<cv::Rect2d>   iTrail;    // track bb trail
   bool iSkip = false;
 
   bool IsFrozen(void)
@@ -35,15 +35,15 @@ struct TrackingContext
 
 using TCbkTracker = std::function<bool (const TrackingContext&)>;
 
-class TrackingManager
+class CTracker
 {
   public:
 
-    TrackingManager()
+    CTracker()
     {
     }
 
-    ~TrackingManager()
+    ~CTracker()
     {
       iTrackingContexts.clear();
     }
@@ -111,7 +111,7 @@ class TrackingManager
     std::vector<TrackingContext> iPurgedContexts;
 };
 
-class OpenCVTracker : public TrackingManager
+class OpenCVTracker : public CTracker
 {
   public:
 
@@ -184,5 +184,7 @@ class OpenCVTracker : public TrackingManager
   protected:
 
 };
+
+using SPCTracker = std::shared_ptr<CTracker>;
 
 #endif //TRACKER_HPP

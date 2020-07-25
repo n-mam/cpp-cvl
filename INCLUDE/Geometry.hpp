@@ -1,5 +1,5 @@
-#ifndef OCVUTIL_HPP
-#define OCVUTIL_HPP 
+#ifndef GEOMETRY_HPP
+#define GEOMETRY_HPP 
 
 bool IsRectInsideMat(const cv::Rect2d& r, const cv::Mat& m)
 {

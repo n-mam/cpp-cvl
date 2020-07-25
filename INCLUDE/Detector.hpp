@@ -6,13 +6,13 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/dnn.hpp>
 
-class Detector
+class CDetector
 {
   public:
 
-    Detector() {}
+    CDetector() {}
 
-    Detector(const std::string& config, const std::string& weight)
+    CDetector(const std::string& config, const std::string& weight)
     {
       iNetwork = cv::dnn::readNet(
         iConfigFile = "../MODELS/" + config, 
@@ -22,7 +22,7 @@ class Detector
       iNetwork.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
     }
 
-    virtual ~Detector() {}
+    virtual ~CDetector() {}
  
     virtual std::vector<cv::Rect2d> Detect(cv::Mat& frame) = 0;
 
@@ -36,12 +36,12 @@ class Detector
     
 };
 
-class FaceDetector : public Detector
+class FaceDetector : public CDetector
 {
   public:
 
     FaceDetector() :
-     Detector("ResNetSSD_deploy.prototxt", "ResNetSSD_deploy.caffemodel") 
+     CDetector("ResNetSSD_deploy.prototxt", "ResNetSSD_deploy.caffemodel") 
     {
     }
 
@@ -88,12 +88,12 @@ class FaceDetector : public Detector
     }
 };
 
-class ObjectDetector : public Detector
+class ObjectDetector : public CDetector
 {
   public:
 
     ObjectDetector() :
-     Detector("MobileNetSSD_deploy.prototxt", "MobileNetSSD_deploy.caffemodel") 
+     CDetector("MobileNetSSD_deploy.prototxt", "MobileNetSSD_deploy.caffemodel") 
     {
     }
 
@@ -154,5 +154,7 @@ class ObjectDetector : public Detector
 	    "sofa", "train", "tvmonitor"
     };
 };
+
+using SPCDetector = std::shared_ptr<CDetector>;
 
 #endif

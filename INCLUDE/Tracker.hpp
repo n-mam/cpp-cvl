@@ -39,8 +39,9 @@ class CTracker
 {
   public:
 
-    CTracker()
+    CTracker(const std::string& tracker)
     {
+      iType = tracker;
     }
 
     ~CTracker()
@@ -106,7 +107,8 @@ class CTracker
     virtual void UpdateTrackingContexts(const cv::Mat& frame, TCbkTracker cbk = nullptr) {}
 
   protected:
-
+  
+    std::string iType;
     std::vector<TrackingContext> iTrackingContexts;
     std::vector<TrackingContext> iPurgedContexts;
 };
@@ -114,6 +116,12 @@ class CTracker
 class OpenCVTracker : public CTracker
 {
   public:
+
+    OpenCVTracker(const std::string& tracker)
+     : CTracker(tracker)
+    {
+
+    }
 
     void AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& roi) override
     {

@@ -6,9 +6,9 @@
 namespace CVL 
 {
 
-auto make_camera(const std::string& rtsp)
+auto make_camera(const std::string& source, const std::string& target, const std::string& tracker)
 {
-  return std::make_shared<CCamera>(rtsp);
+  return std::make_shared<CCamera>(source, target, tracker);
 }
 
 

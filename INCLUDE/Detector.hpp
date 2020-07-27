@@ -15,8 +15,8 @@ class CDetector
     CDetector(const std::string& config, const std::string& weight)
     {
       iNetwork = cv::dnn::readNet(
-        iConfigFile = "../MODELS/" + config, 
-        iWeightFile = "../MODELS/" + weight
+        iConfigFile = "../../cpp-cvl/MODELS/" + config, 
+        iWeightFile = "../../cpp-cvl/MODELS/" + weight
       );
       iNetwork.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
       iNetwork.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
@@ -27,6 +27,8 @@ class CDetector
     virtual std::vector<cv::Rect2d> Detect(cv::Mat& frame) = 0;
 
   protected:
+
+    std::string iTarget;
 
     std::string iConfigFile;
 
@@ -92,9 +94,10 @@ class ObjectDetector : public CDetector
 {
   public:
 
-    ObjectDetector() :
+    ObjectDetector(const std::string& target) :
      CDetector("MobileNetSSD_deploy.prototxt", "MobileNetSSD_deploy.caffemodel") 
     {
+      iTarget = target;
     }
 
     virtual std::vector<cv::Rect2d> Detect(cv::Mat& frame) override
@@ -129,7 +132,7 @@ class ObjectDetector : public CDetector
 
           idx = static_cast<int>(detectionMat.at<float>(i, 1));
 
-          if (iObjectClass[idx] == "person")
+          if (iObjectClass[idx] == iTarget)
           {
             x1 = static_cast<int>(detectionMat.at<float>(i, 3) * frame.cols);
             y1 = static_cast<int>(detectionMat.at<float>(i, 4) * frame.rows);

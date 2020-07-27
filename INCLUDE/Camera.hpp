@@ -11,15 +11,26 @@
 
 #include <CSubject.hpp>
 
+using TOnStopCbk = std::function<void (void)>;
+
 class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 {
   public:
 
-    CCamera(const std::string& source)
+    CCamera(const std::string& source, const std::string& target, const std::string& tracker)
     {
       iSource = std::make_shared<CSource>(source);
-      iTracker = std::make_shared<OpenCVTracker>();
-      iDetector = std::make_shared<ObjectDetector>();
+      iTracker = std::make_shared<OpenCVTracker>(tracker);
+
+      if (target == "person" || target == "car")
+      {
+        iDetector = std::make_shared<ObjectDetector>(target);
+      }
+      else if (target == "face")
+      {
+        iDetector = std::make_shared<FaceDetector>();
+      }
+
       iCounter = std::make_shared<CCounter>();
     }
 
@@ -28,7 +39,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       Stop();
     }
 
-    bool Start(void)
+    bool Start(TOnStopCbk cbk = nullptr)
     {
       if(!iSource->isOpened())
       {
@@ -36,12 +47,14 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
         return false;
       }
 
+      iOnStopCbk = cbk;
+
       iRunThread = std::thread(&CCamera::Run, this);
 
       return true;
     }
 
-    void Stop()
+    void Stop(TOnStopCbk cbk = nullptr)
     {
       iStop = true;
 
@@ -119,20 +132,32 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
         cv::line(frame, iCounter->GetRefStartPoint(frame), iCounter->GetRefEndPoint(frame), cv::Scalar(0, 0, 255), 1);
 
-	      cv::imshow("People Counting", frame);
+	      cv::imshow(this->GetName().c_str(), frame);
 
         if (!iSource->HandleUserInput(iCounter)) break;
       }
+
+      if (iOnStopCbk)
+      {
+        iOnStopCbk();
+      }      
     }
 
   protected:
 
-    SPCSource   iSource;
-    SPCTracker  iTracker;
-    SPCCounter  iCounter;
-    SPCDetector iDetector;    
-    std::thread iRunThread;
     bool iStop = false;
+
+    TOnStopCbk iOnStopCbk = nullptr;
+
+    std::thread iRunThread;
+    
+    SPCSource   iSource;
+
+    SPCTracker  iTracker;
+
+    SPCCounter  iCounter;
+
+    SPCDetector iDetector;
 };
 
 using SPCCamera = std::shared_ptr<CCamera>;

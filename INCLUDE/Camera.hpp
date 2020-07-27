@@ -2,6 +2,7 @@
 #define CAMERA_HPP
 
 #include <thread>
+#include <chrono>
 
 #include <Source.hpp>
 #include <Tracker.hpp>
@@ -12,6 +13,7 @@
 #include <CSubject.hpp>
 
 using TOnStopCbk = std::function<void (void)>;
+using TPlayCbk = std::function<void (const std::string& frame)>;
 
 class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 {
@@ -62,6 +64,18 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       {
         iRunThread.join();
       }
+    }
+
+    void Play(TPlayCbk cbk)
+    {
+      iPlayCbk = cbk;
+      iPause = false;
+    }
+
+    void Pause()
+    {
+      iPlayCbk = nullptr;
+      iPause = true;
     }
 
     void Run(void)
@@ -132,7 +146,19 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
         cv::line(frame, iCounter->GetRefStartPoint(frame), iCounter->GetRefEndPoint(frame), cv::Scalar(0, 0, 255), 1);
 
-	      cv::imshow(this->GetName().c_str(), frame);
+        if (iPlayCbk)
+        {
+
+        }
+        else
+        {
+          cv::imshow(this->GetName().c_str(), frame);
+        }
+
+        while (iPause)
+        {
+          std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        }
 
         if (!iSource->HandleUserInput(iCounter)) break;
       }
@@ -147,10 +173,14 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
     bool iStop = false;
 
+    bool iPause = false;
+
     TOnStopCbk iOnStopCbk = nullptr;
 
+    TPlayCbk iPlayCbk = nullptr;
+
     std::thread iRunThread;
-    
+
     SPCSource   iSource;
 
     SPCTracker  iTracker;

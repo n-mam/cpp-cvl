@@ -22,7 +22,6 @@ class CSource
 
     ~CSource()
     {
-
     }
 
     bool isOpened(void)

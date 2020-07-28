@@ -11,6 +11,7 @@
 #include <Geometry.hpp>
 
 #include <CSubject.hpp>
+#include <Encryption.hpp>
 
 using TOnStopCbk = std::function<void (void)>;
 using TPlayCbk = std::function<void (const std::string& frame)>;
@@ -41,19 +42,19 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       Stop();
     }
 
-    bool Start(TOnStopCbk cbk = nullptr)
+    void Start(TOnStopCbk cbk = nullptr)
     {
       if(!iSource->isOpened())
       {
         std::cout << "Error opening video stream\n";
-        return false;
+        return;
       }
 
+      iStop = false;
+      
       iOnStopCbk = cbk;
 
       iRunThread = std::thread(&CCamera::Run, this);
-
-      return true;
     }
 
     void Stop(TOnStopCbk cbk = nullptr)
@@ -68,14 +69,28 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
     void Play(TPlayCbk cbk)
     {
+      std::lock_guard<std::mutex> lg(iLock);
       iPlayCbk = cbk;
-      iPause = false;
+      iPaused = false;
     }
 
     void Pause()
     {
+      std::lock_guard<std::mutex> lg(iLock);
+      iPaused = true;
       iPlayCbk = nullptr;
-      iPause = true;
+    }
+
+    bool IsStarted()
+    {
+      std::lock_guard<std::mutex> lg(iLock);
+      return iRunThread.joinable() ? true : false;
+    }
+
+    bool IsPaused()
+    {
+      std::lock_guard<std::mutex> lg(iLock);
+      return iPaused;
     }
 
     void Run(void)
@@ -146,21 +161,32 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
         cv::line(frame, iCounter->GetRefStartPoint(frame), iCounter->GetRefEndPoint(frame), cv::Scalar(0, 0, 255), 1);
 
-        if (iPlayCbk)
         {
+          std::lock_guard<std::mutex> lg(iLock);
 
-        }
-        else
-        {
-          cv::imshow(this->GetName().c_str(), frame);
-        }
-
-        while (iPause)
-        {
-          std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+          if (iPlayCbk)
+          {
+            std::vector<uchar> buf;
+            cv::imencode(".jpg", frame, buf);
+            char encoded[360*500];
+            int n = Base64Encode((unsigned char *)encoded, buf.data(), buf.size());
+            iPlayCbk(std::string(encoded, n));
+          }
+          else
+          {
+            if (0)
+            {
+              cv::imshow(this->GetName().c_str(), frame);
+            }
+          }
         }
 
         if (!iSource->HandleUserInput(iCounter)) break;
+
+        while (iPaused && !iStop)
+        {
+          std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        }
       }
 
       if (iOnStopCbk)
@@ -173,7 +199,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
     bool iStop = false;
 
-    bool iPause = false;
+    bool iPaused = false;
 
     TOnStopCbk iOnStopCbk = nullptr;
 

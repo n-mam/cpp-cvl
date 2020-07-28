@@ -51,7 +51,9 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       }
 
       iStop = false;
-      
+
+	  iPaused = false;
+
       iOnStopCbk = cbk;
 
       iRunThread = std::thread(&CCamera::Run, this);

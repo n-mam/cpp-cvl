@@ -33,6 +33,10 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       {
         iDetector = std::make_shared<FaceDetector>();
       }
+      else if (target == "mocap")
+      {
+        iDetector = std::make_shared<BackgroundSubtractor>();
+      }
 
       iCounter = std::make_shared<CCounter>();
     }

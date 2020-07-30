@@ -166,8 +166,61 @@ class BackgroundSubtractor : public CDetector
 
     virtual std::vector<cv::Rect2d> Detect(cv::Mat& frame) override
     {
+      cv::Mat gray, blur, delta, thresh, dilate;
 
+      cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
+      cv::GaussianBlur(gray, blur, cv::Size(21,21), 0);
+
+      if (iFirstFrame.empty())
+      {
+        iFirstFrame = blur;
+      }
+
+	    cv::absdiff(iFirstFrame, blur, delta);
+	    cv::threshold(delta, thresh, 25, 255, cv::THRESH_BINARY);
+      cv::dilate(thresh, dilate, cv::Mat(), cv::Point(-1, -1), 2);
+
+      std::vector<
+        std::vector<cv::Point>
+      > contours;
+
+      std::vector<cv::Rect2d> detections;
+
+      cv::findContours(dilate, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+      for (size_t i = 0; i < contours.size(); i++) 
+      {
+        if (cv::contourArea(contours[i]) < 1000) continue;
+
+        auto bb = cv::boundingRect(contours[i]);
+        if (bb.width > bb.height) continue;  
+
+        bool skip = false;
+
+        for (size_t j = 0; j < contours.size(); j++)
+        {
+          if (DoesRectOverlapRect(bb, cv::boundingRect(contours[j])))
+          {
+            if (i != j)
+            {
+              skip = true;
+              break;
+            }
+          }
+        }
+
+        if (!skip)
+        {
+          detections.push_back(bb);
+        }
+      }
+      return detections;
     }
+  
+  protected:
+
+    cv::Mat iFirstFrame;
+
 };
 
 using SPCDetector = std::shared_ptr<CDetector>;

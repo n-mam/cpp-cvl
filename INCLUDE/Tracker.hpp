@@ -86,16 +86,17 @@ class CTracker
           cv::line(m, f, b, cv::Scalar(0, 255, 0), 1);
         }
 
-        cv::rectangle(m, tc.iTrail.back(), cv::Scalar(255, 0, 0 ), 1, 1);
+        cv::rectangle(m, tc.iTrail.back(), cv::Scalar(0, 0, 255), 1, 1); //tracking red
       }
     }
 
-    bool DoesROIOverlapAnyContext(cv::Rect2d roi)
+    bool DoesROIOverlapAnyContext(cv::Rect2d roi, cv::Mat& m)
     {
       for (auto& tc : iTrackingContexts)
       {
         if (DoesRectOverlapRect(roi, tc.iTrail.back()))
         {
+          cv::rectangle(m, roi, cv::Scalar(255, 0, 0 ), 1, 1);  // detection blue
           return true;
         }
       }
@@ -117,11 +118,7 @@ class OpenCVTracker : public CTracker
 {
   public:
 
-    OpenCVTracker(const std::string& tracker)
-     : CTracker(tracker)
-    {
-
-    }
+    OpenCVTracker(const std::string& tracker) : CTracker(tracker) {}
 
     void AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& roi) override
     {

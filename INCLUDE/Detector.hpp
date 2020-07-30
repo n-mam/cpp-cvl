@@ -158,6 +158,18 @@ class ObjectDetector : public CDetector
     };
 };
 
+class BackgroundSubtractor : public CDetector
+{
+  public:
+
+    BackgroundSubtractor() : CDetector() {}
+
+    virtual std::vector<cv::Rect2d> Detect(cv::Mat& frame) override
+    {
+
+    }
+};
+
 using SPCDetector = std::shared_ptr<CDetector>;
 
 #endif

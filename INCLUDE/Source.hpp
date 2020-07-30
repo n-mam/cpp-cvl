@@ -105,7 +105,7 @@ class CSource
         else if (c == 'w' || c == 's')
         {
           if (c == 'w') spcounter->SetRefLine(1, -10);
-          if (c == 's') spcounter->SetRefLine(1, -10); 
+          if (c == 's') spcounter->SetRefLine(1, 10); 
         }
         else if (c == 'q' || c == 'Q')
         {

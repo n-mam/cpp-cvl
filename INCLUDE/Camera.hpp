@@ -52,7 +52,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
       iStop = false;
 
-	  iPaused = false;
+	    iPaused = false;
 
       iOnStopCbk = cbk;
 
@@ -95,6 +95,16 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       return iPaused;
     }
 
+    void SetSkipCount(int count = 0)
+    {
+      iSkipCount = count;
+    }
+    
+    int GetSkipCount()
+    {
+      return iSkipCount;
+    }
+
     void Run(void)
     {
       cv::Mat frame;
@@ -127,33 +137,35 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
           cvtColor(frame, frame, cv::COLOR_BGRA2BGR);
         }
 
-        cv::Mat temp = frame.clone();
-        /*
-         * update all active trackers first
-         */
-        iTracker->UpdateTrackingContexts(temp,
-          [this, &frame](auto& tc)
-          {
-            return iCounter->ProcessTrail(tc.iTrail, frame);
-          });
-
-        /*
-         * run the detector and filter out 
-         * tracker updated overlapping rois
-         */
-        auto detections = iDetector->Detect(temp);
-
-        for (int i = (detections.size() - 1); detections.size() && i >= 0; i--)
+        if (iSource->GetCurrentOffset() % GetSkipCount() == 0)
         {
-          if (iTracker->DoesROIOverlapAnyContext(detections[i]))
+          cv::Mat temp = frame.clone();
+          /*
+           * update all active trackers first
+           */
+          iTracker->UpdateTrackingContexts(temp,
+            [this, &frame](auto& tc)
+            {
+              return iCounter->ProcessTrail(tc.iTrail, frame);
+            });
+          /*
+           * run the detector and filter out 
+           * tracker updated overlapping rois
+           */
+          auto detections = iDetector->Detect(temp);
+
+          for (int i = (detections.size() - 1); detections.size() && i >= 0; i--)
           {
-            detections.erase(detections.begin() + i);       
+            if (iTracker->DoesROIOverlapAnyContext(detections[i], frame))
+            {
+              detections.erase(detections.begin() + i);
+            }
           }
-        }
 
-        for (auto& roi : detections)
-        {
-          iTracker->AddNewTrackingContext(temp, roi);
+          for (auto& roi : detections)
+          {
+            iTracker->AddNewTrackingContext(temp, roi);
+          }
         }
 
         iTracker->RenderTrackingContextsPath(frame);
@@ -176,7 +188,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
           }
           else
           {
-            if (0)
+            if (GetName() == "CV")
             {
               cv::imshow(this->GetName().c_str(), frame);
             }
@@ -202,6 +214,8 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
     bool iStop = false;
 
     bool iPaused = false;
+
+    int iSkipCount = 1;
 
     TOnStopCbk iOnStopCbk = nullptr;
 

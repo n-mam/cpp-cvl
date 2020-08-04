@@ -45,13 +45,37 @@ class CSource
       iCurrentOffset = 0;
     }
 
+    void Forward(void)
+    {
+      iJump = 5;
+    }
+
+    void Backward(void)
+    {
+      iJump = -5;
+    }
+
     bool Read(cv::Mat& m)
     {
       bool fRet = iCapture.read(m);
 
       if (fRet)
       {
-        iCurrentOffset++;
+        if (iJump)
+        {
+          auto offset = iCurrentOffset + iJump;
+
+          if (offset <= iCapture.get(cv::CAP_PROP_FRAME_COUNT) && offset >= 0)
+          {
+            iCapture.set(cv::CAP_PROP_POS_FRAMES, iCurrentOffset = offset);
+          }
+
+          iJump = 0;
+        }
+        else
+        {
+          iCurrentOffset++;
+        }
 
         if (iCamera != -1)
         {
@@ -81,21 +105,11 @@ class CSource
         }
         else if (c == 'r' || c == 'R')
         {
-          auto o = iCurrentOffset - 5;
-
-          if (o >= 0)
-          {
-            iCapture.set(cv::CAP_PROP_POS_FRAMES, iCurrentOffset = o);
-          }
+          Backward();
         }
         else if (c == 'f' || c == 'F')
         {
-          auto offset = iCurrentOffset + 5;
-
-          if (offset <= iCapture.get(cv::CAP_PROP_FRAME_COUNT))
-          {
-            iCapture.set(cv::CAP_PROP_POS_FRAMES, iCurrentOffset = offset);
-          }
+          Forward();
         }
         else if (c == 'a' || c == 'd')
         {
@@ -125,6 +139,8 @@ class CSource
     cv::VideoCapture iCapture;
 
     size_t iCurrentOffset = 0;
+
+    int iJump = 0;
 };
 
 using SPCSource = std::shared_ptr<CSource>;

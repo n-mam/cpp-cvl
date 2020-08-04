@@ -93,6 +93,16 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       iPlayCbk = nullptr;
     }
 
+    void Forward(void)
+    {
+      iSource->Forward();
+    }
+
+    void Backward(void)
+    {
+      iSource->Backward();
+    }
+
     bool IsStarted()
     {
       std::lock_guard<std::mutex> lg(iLock);

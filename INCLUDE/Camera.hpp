@@ -80,6 +80,12 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       iPaused = false;
     }
 
+    void StopPlay(void)
+    {
+      std::lock_guard<std::mutex> lg(iLock);
+      iPlayCbk = nullptr;
+    }
+
     void Pause()
     {
       std::lock_guard<std::mutex> lg(iLock);

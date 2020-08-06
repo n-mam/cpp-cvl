@@ -13,8 +13,7 @@
 #include <CSubject.hpp>
 #include <Encryption.hpp>
 
-using TOnStopCbk = std::function<void (void)>;
-using TPlayCbk = std::function<void (const std::string& frame)>;
+using TOnCameraEventCbk = std::function<void (const std::string&, const std::string&)>;
 
 class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 {
@@ -46,7 +45,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       Stop();
     }
 
-    void Start(TOnStopCbk cbk = nullptr)
+    void Start(TOnCameraEventCbk cbk = nullptr)
     {
       if(!iSource->isOpened())
       {
@@ -58,12 +57,12 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
 	    iPaused = false;
 
-      iOnStopCbk = cbk;
+      iOnCameraEventCbk = cbk;
 
       iRunThread = std::thread(&CCamera::Run, this);
     }
 
-    void Stop(TOnStopCbk cbk = nullptr)
+    void Stop(void)
     {
       iStop = true;
 
@@ -73,24 +72,23 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       }
     }
 
-    void Play(TPlayCbk cbk)
+    void Play(void)
     {
       std::lock_guard<std::mutex> lg(iLock);
-      iPlayCbk = cbk;
+      iPlay = true;
       iPaused = false;
+    }
+
+    void Pause(void)
+    {
+      std::lock_guard<std::mutex> lg(iLock);
+      iPaused = true;
     }
 
     void StopPlay(void)
     {
       std::lock_guard<std::mutex> lg(iLock);
-      iPlayCbk = nullptr;
-    }
-
-    void Pause()
-    {
-      std::lock_guard<std::mutex> lg(iLock);
-      iPaused = true;
-      iPlayCbk = nullptr;
+      iPlay = false;
     }
 
     void Forward(void)
@@ -198,13 +196,13 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
         {
           std::lock_guard<std::mutex> lg(iLock);
 
-          if (iPlayCbk)
+          if (iPlay)
           {
             std::vector<uchar> buf;
             cv::imencode(".jpg", frame, buf);
             char encoded[360*500];
             int n = Base64Encode((unsigned char *)encoded, buf.data(), buf.size());
-            iPlayCbk(std::string(encoded, n));
+            iOnCameraEventCbk("play", std::string(encoded, n));
           }
           else
           {
@@ -223,9 +221,9 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
         }
       }
 
-      if (iOnStopCbk)
+      if (iOnCameraEventCbk)
       {
-        iOnStopCbk();
+        iOnCameraEventCbk("stop", "");
       }      
     }
 
@@ -233,13 +231,13 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
     bool iStop = false;
 
+    bool iPlay = false;
+
     bool iPaused = false;
 
     int iSkipCount = 1;
 
-    TOnStopCbk iOnStopCbk = nullptr;
-
-    TPlayCbk iPlayCbk = nullptr;
+    TOnCameraEventCbk iOnCameraEventCbk = nullptr;
 
     std::thread iRunThread;
 

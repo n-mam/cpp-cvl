@@ -10,7 +10,9 @@ int main(int argc, char *argv[])
 
   camera->SetName("CV");
 
-  camera->Start();
+  camera->Start([](const std::string& e, const std::string& data){
+    std::cout << "Camera event callback : " << e << " data : " << data << "\n";
+  });
 
   getchar();
   

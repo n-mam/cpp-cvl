@@ -103,6 +103,11 @@ class CTracker
       return false;
     }
 
+    virtual void SetEventCallback(TOnCameraEventCbk cbk)
+    {
+      iOnCameraEventCbk = cbk;
+    }
+
     virtual void AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& r) {}
 
     virtual void UpdateTrackingContexts(const cv::Mat& frame, TCbkTracker cbk = nullptr) {}
@@ -110,8 +115,33 @@ class CTracker
   protected:
   
     std::string iType;
+    TOnCameraEventCbk iOnCameraEventCbk = nullptr;
     std::vector<TrackingContext> iTrackingContexts;
     std::vector<TrackingContext> iPurgedContexts;
+
+    virtual void PurgeAndSaveTrackingContext(TrackingContext& tc)
+    {
+      if (iOnCameraEventCbk)
+      {
+        std::string data = "";
+
+        for (auto& r : tc.iTrail)
+        {
+          auto p = GetRectCenter(r);
+
+          if (data.size())
+          {
+            data += ", ";
+          }
+
+          data += std::to_string(p.x) + " " + std::to_string(p.y);
+        }
+
+        iOnCameraEventCbk("trail", data);
+      }
+
+      iPurgedContexts.push_back(tc);
+    }
 };
 
 class OpenCVTracker : public CTracker
@@ -149,7 +179,7 @@ class OpenCVTracker : public CTracker
 
         if (tc.IsFrozen())
         {
-          iPurgedContexts.push_back(tc);
+          PurgeAndSaveTrackingContext(tc);
           iTrackingContexts.erase(iTrackingContexts.begin() + i);          
           std::cout << "removed frozen tc\n";
           continue;
@@ -172,14 +202,14 @@ class OpenCVTracker : public CTracker
           }
           else
           {
-            iPurgedContexts.push_back(tc);
+            PurgeAndSaveTrackingContext(tc);
             iTrackingContexts.erase(iTrackingContexts.begin() + i);
             std::cout << "Tracker at " << i << " is out of the bounds, size : " << iTrackingContexts.size() << "\n";
           }
         }
         else
         {
-          iPurgedContexts.push_back(tc);
+          PurgeAndSaveTrackingContext(tc);
           iTrackingContexts.erase(iTrackingContexts.begin() + i);
           std::cout << "Tracker at " << i << " lost, size : " << iTrackingContexts.size() << "\n";
         }

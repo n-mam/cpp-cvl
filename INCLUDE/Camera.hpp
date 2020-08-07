@@ -3,6 +3,9 @@
 
 #include <thread>
 #include <chrono>
+#include <functional>
+
+using TOnCameraEventCbk = std::function<void (const std::string&, const std::string&)>;
 
 #include <Source.hpp>
 #include <Tracker.hpp>
@@ -13,8 +16,6 @@
 #include <CSubject.hpp>
 #include <Encryption.hpp>
 
-using TOnCameraEventCbk = std::function<void (const std::string&, const std::string&)>;
-
 class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 {
   public:
@@ -22,6 +23,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
     CCamera(const std::string& source, const std::string& target, const std::string& tracker)
     {
       iSource = std::make_shared<CSource>(source);
+
       iTracker = std::make_shared<OpenCVTracker>(tracker);
 
       if (target == "person" || target == "car")
@@ -47,7 +49,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
     void Start(TOnCameraEventCbk cbk = nullptr)
     {
-      if(!iSource->isOpened())
+      if (!iSource->isOpened())
       {
         std::cout << "Error opening video stream\n";
         return;
@@ -58,6 +60,8 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 	    iPaused = false;
 
       iOnCameraEventCbk = cbk;
+
+      iTracker->SetEventCallback(cbk);
 
       iRunThread = std::thread(&CCamera::Run, this);
     }

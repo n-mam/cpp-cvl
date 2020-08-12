@@ -9,7 +9,7 @@
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/Release/Test.exe",
-            "args": ["f:\\tv2.mp4"],
+            "args": ["0"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",
             "environment": [],

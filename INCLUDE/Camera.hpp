@@ -22,7 +22,14 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
     CCamera(const std::string& source, const std::string& target, const std::string& tracker)
     {
-      iSource = std::make_shared<CSource>(source);
+      if (isalpha(source[0]))
+      {
+        iSource = std::make_shared<CSource>(source);
+      }
+      else
+      {
+        iSource = std::make_shared<CSource>(std::stoi(source));
+      }
 
       iTracker = std::make_shared<OpenCVTracker>(tracker);
 

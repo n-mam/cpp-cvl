@@ -14,10 +14,9 @@ class CDetector
 
     CDetector(const std::string& config, const std::string& weight)
     {
-      iNetwork = cv::dnn::readNet(
-        iConfigFile = "../../cpp-cvl/MODELS/" + config, 
-        iWeightFile = "../../cpp-cvl/MODELS/" + weight
-      );
+      iConfigFile = "../../cpp-cvl/MODELS/" + config; 
+      iWeightFile = "../../cpp-cvl/MODELS/" + weight;
+      iNetwork = cv::dnn::readNet(iConfigFile, iWeightFile);
       iNetwork.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
       iNetwork.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
     }
@@ -38,6 +37,64 @@ class CDetector
     
 };
 
+using SPCDetector = std::shared_ptr<CDetector>;
+
+class AgeDetector : public CDetector
+{
+  public:
+
+    AgeDetector() :
+     CDetector("age_net.caffemodel", "deploy_age.prototxt") 
+    {
+    }
+
+    virtual std::vector<cv::Rect2d> Detect(cv::Mat& frame) override
+    {
+      auto blob = cv::dnn::blobFromImage(
+        frame, 1, cv::Size(227, 227), 
+        cv::Scalar(78.4263377603, 87.7689143744, 114.895847746), 
+        false);
+      iNetwork.setInput(blob);
+      std::vector<float> agePreds = iNetwork.forward();
+      int max_indice_age = std::distance(agePreds.begin(), max_element(agePreds.begin(), agePreds.end()));
+      std::string age = ageList[max_indice_age];
+      std::cout << "age : " << age << "\n";
+      return {};
+    }
+  
+  protected:
+
+    std::vector<std::string> ageList = {"(0-2)", "(4-6)", "(8-12)", "(15-20)", "(25-32)", "(38-43)", "(48-53)", "(60-100)"};
+};
+
+class GenderDetector : public CDetector
+{
+  public:
+
+    GenderDetector() :
+     CDetector("gender_net.caffemodel", "deploy_gender.prototxt") 
+    {
+    }
+
+    virtual std::vector<cv::Rect2d> Detect(cv::Mat& frame) override
+    {
+      auto blob = cv::dnn::blobFromImage(
+        frame, 1, cv::Size(227, 227), 
+        cv::Scalar(78.4263377603, 87.7689143744, 114.895847746), 
+        false);
+      iNetwork.setInput(blob);
+      std::vector<float> genderPreds = iNetwork.forward();
+      int max_index_gender = std::distance(genderPreds.begin(), max_element(genderPreds.begin(), genderPreds.end()));
+      std::string gender = genderList[max_index_gender];
+      std::cout << "gender : " << gender << "\n";
+      return {};
+    }
+
+  protected:
+
+    std::vector<std::string> genderList = {"Male", "Female"};
+};
+
 class FaceDetector : public CDetector
 {
   public:
@@ -45,6 +102,8 @@ class FaceDetector : public CDetector
     FaceDetector() :
      CDetector("ResNetSSD_deploy.prototxt", "ResNetSSD_deploy.caffemodel") 
     {
+      iAgeDetector = std::make_shared<AgeDetector>();
+      iGenderDetector = std::make_shared<GenderDetector>();
     }
 
     virtual std::vector<cv::Rect2d> Detect(cv::Mat& frame) override
@@ -83,11 +142,28 @@ class FaceDetector : public CDetector
           out.emplace_back(cv::Point(x1, y1), cv::Point(x2, y2));
 
           std::cout << "Face detected at " << x1 << "," << y1 << "[" << x2 - x1 << "," << y2 - y1 << "]\n";
+
+          cv::Mat roi(resized(cv::Rect(x1, y1, x2 - x1, y2 - y1)));
+
+          if (iAgeDetector)
+          {
+            iAgeDetector->Detect(roi);
+          }
+
+          if (iGenderDetector)
+          {
+            iGenderDetector->Detect(roi);
+          }
         }
       }
 
       return out;
     }
+
+  protected:
+
+    SPCDetector iAgeDetector = nullptr;
+    SPCDetector iGenderDetector = nullptr;
 };
 
 class ObjectDetector : public CDetector
@@ -222,7 +298,5 @@ class BackgroundSubtractor : public CDetector
     cv::Mat iFirstFrame;
 
 };
-
-using SPCDetector = std::shared_ptr<CDetector>;
 
 #endif

@@ -11,8 +11,6 @@ auto make_camera(const std::string& source, const std::string& target, const std
   return std::make_shared<CCamera>(source, target, tracker);
 }
 
-
-
 }
 
 #endif

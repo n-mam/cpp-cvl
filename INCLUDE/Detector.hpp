@@ -110,12 +110,10 @@ class FaceDetector : public CDetector
     {
       std::vector<cv::Rect2d> out;
 
-      cv::Mat resized;
 
-      cv::resize(frame, resized, cv::Size(300, 300));
 
       cv::Mat inputBlob = cv::dnn::blobFromImage(
-        resized,
+        frame,
         1.0f,
         cv::Size(300, 300),
         cv::Scalar(104.0, 177.0, 123.0),
@@ -143,16 +141,21 @@ class FaceDetector : public CDetector
 
           std::cout << "Face detected at " << x1 << "," << y1 << "[" << x2 - x1 << "," << y2 - y1 << "]\n";
 
-          cv::Mat roi(resized(cv::Rect(x1, y1, x2 - x1, y2 - y1)));
+          auto rect = cv::Rect2d(x1, y1, x2-x1, y2-y1);
 
-          if (iAgeDetector)
+          if (IsRectInsideMat(rect, frame))
           {
-            iAgeDetector->Detect(roi);
-          }
+            cv::Mat roi = cv::Mat(frame, rect);
 
-          if (iGenderDetector)
-          {
-            iGenderDetector->Detect(roi);
+            if (iAgeDetector)
+            {
+              iAgeDetector->Detect(roi);
+            }
+
+            if (iGenderDetector)
+            {
+              iGenderDetector->Detect(roi);
+            }
           }
         }
       }

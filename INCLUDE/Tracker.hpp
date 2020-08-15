@@ -140,6 +140,11 @@ class CTracker
         iOnCameraEventCbk("trail", data);
       }
 
+      if (iPurgedContexts.size() > 20)
+      {
+        iPurgedContexts.clear();
+      }
+
       iPurgedContexts.push_back(tc);
     }
 };

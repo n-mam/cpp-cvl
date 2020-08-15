@@ -110,8 +110,6 @@ class FaceDetector : public CDetector
     {
       std::vector<cv::Rect2d> out;
 
-
-
       cv::Mat inputBlob = cv::dnn::blobFromImage(
         frame,
         1.0f,

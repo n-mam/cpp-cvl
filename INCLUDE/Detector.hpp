@@ -17,8 +17,8 @@ class CDetector
       iConfigFile = "../../cpp-cvl/MODELS/" + config; 
       iWeightFile = "../../cpp-cvl/MODELS/" + weight;
       iNetwork = cv::dnn::readNet(iConfigFile, iWeightFile);
-      iNetwork.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
-      iNetwork.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+      // iNetwork.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+      // iNetwork.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
     }
 
     virtual ~CDetector() {}

@@ -1,6 +1,7 @@
 project (cpp-cvl)
 
 find_package(OpenCV REQUIRED)
+find_package(Threads REQUIRED)
 
 ADD_EXECUTABLE(Test Test.cpp)
 

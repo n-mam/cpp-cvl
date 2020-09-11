@@ -2,6 +2,9 @@ project (cpp-cvl)
 
 find_package(OpenCV REQUIRED)
 find_package(Threads REQUIRED)
+if (UNIX)
+ find_package(OpenSSL REQUIRED)
+endif (UNIX)
 
 ADD_EXECUTABLE(Test Test.cpp)
 
@@ -28,4 +31,9 @@ TARGET_INCLUDE_DIRECTORIES(
   ${CMAKE_SOURCE_DIR}/../cpp-npl/INCLUDE
 )
 
-TARGET_LINK_LIBRARIES(Test ${OpenCV_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+if (WIN32)
+  TARGET_LINK_LIBRARIES(Test ${OpenCV_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+else()
+  TARGET_LINK_LIBRARIES(Test ${OpenCV_LIBS} ${CMAKE_THREAD_LIBS_INIT} OpenSSL::SSL)
+endif (WIN32)
+

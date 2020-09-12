@@ -270,7 +270,8 @@ class BackgroundSubtractor : public CDetector
         if (cv::contourArea(contours[i]) < 1000) continue;
 
         auto bb = cv::boundingRect(contours[i]);
-        if (bb.width > bb.height) continue;  
+
+        if (bb.width > bb.height) continue;
 
         bool skip = false;
 

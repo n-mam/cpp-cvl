@@ -14,7 +14,6 @@ clone opencv repo
 clone opencv_contrib repo
 
 "C:\Program Files (x86)\IntelSWTools\compilers_and_libraries\windows\tbb\bin\tbbvars.bat" intel64
-
 "C:\Program Files (x86)\IntelSWTools\compilers_and_libraries\windows\mkl\bin\mklvars.bat" intel64
 
 cmake ^

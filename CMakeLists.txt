@@ -4,7 +4,7 @@ find_package(Threads REQUIRED)
 find_package(OpenCV REQUIRED)
 
 if (UNIX)
- find_package(OpenSSL REQUIRED)
+  find_package(OpenSSL REQUIRED)
 endif (UNIX)
 
 ADD_EXECUTABLE(Test Test.cpp)

@@ -1,7 +1,8 @@
 project (cpp-cvl)
 
-find_package(OpenCV REQUIRED)
 find_package(Threads REQUIRED)
+find_package(OpenCV REQUIRED)
+
 if (UNIX)
  find_package(OpenSSL REQUIRED)
 endif (UNIX)
@@ -24,7 +25,7 @@ endif (WIN32)
 
 TARGET_INCLUDE_DIRECTORIES(
   Test
-  PUBLIC
+  PRIVATE
   ${CMAKE_SOURCE_DIR}
   ${CMAKE_SOURCE_DIR}/INCLUDE
   ${CMAKE_SOURCE_DIR}/../cpp-npl

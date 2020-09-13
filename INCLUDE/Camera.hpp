@@ -22,6 +22,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
     CCamera(const std::string& source, const std::string& target, const std::string& tracker)
     {
+	  putenv("OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp");
       if (isalpha(source[0]))
       {
         iSource = std::make_shared<CSource>(source);

@@ -4,8 +4,6 @@
 
 int main(int argc, char *argv[])
 {
-  putenv("OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp");
-
   auto camera = CVL::make_camera(argv[1], "person", "CSRT");
 
   camera->SetName("CV");

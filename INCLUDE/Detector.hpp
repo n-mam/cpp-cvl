@@ -14,8 +14,19 @@ class CDetector
 
     CDetector(const std::string& config, const std::string& weight)
     {
-      iConfigFile = "../cpp-cvl/MODELS/" + config; 
-      iWeightFile = "../cpp-cvl/MODELS/" + weight;
+      char *isTest = getenv("cpp-cvl-test");
+
+      if (isTest)
+      {
+        iConfigFile = "../../cpp-cvl/MODELS/" + config;
+        iWeightFile = "../../cpp-cvl/MODELS/" + weight;
+      }
+      else
+      {
+        iConfigFile = "./MODELS/" + config;
+        iWeightFile = "./MODELS/" + weight;
+      }
+
       iNetwork = cv::dnn::readNet(iConfigFile, iWeightFile);
       // iNetwork.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
       // iNetwork.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);

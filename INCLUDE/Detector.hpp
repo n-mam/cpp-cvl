@@ -270,8 +270,8 @@ class BackgroundSubtractor : public CDetector
 
     BackgroundSubtractor() : CDetector()
     {
-      SetProperty("AreaThreshold", "1000");
-      SetProperty("ExcludeHorizontalBB", "1");
+      SetProperty("bbarea", "100");
+      SetProperty("exhzbb", "false");
     }
 
     virtual std::vector<cv::Rect2d> Detect(cv::Mat& frame) override
@@ -298,19 +298,19 @@ class BackgroundSubtractor : public CDetector
 
       cv::findContours(dilate, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
-      auto& areaThreshold = GetProperty("AreaThreshold");
-      auto& filterHBB = GetProperty("ExcludeHorizontalBB");
+      auto areaThreshold = GetPropertyAsInt("bbarea");
+      auto excludeHBB = GetPropertyAsBool("exhzbb");
 
       for (size_t i = 0; i < contours.size(); i++) 
       {
-        if (cv::contourArea(contours[i]) < std::stoi(areaThreshold))
+        if (cv::contourArea(contours[i]) < areaThreshold)
         {
           continue;
         }
 
         auto bb = cv::boundingRect(contours[i]);
 
-        if ((filterHBB == "1") && (bb.width > bb.height)) 
+        if (excludeHBB && (bb.width > bb.height)) 
         {
           continue;
         }
@@ -336,6 +336,15 @@ class BackgroundSubtractor : public CDetector
       }
 
       return detections;
+    }
+
+    virtual void SetProperty(const std::string& key, const std::string& value) override
+    {
+      if (key == "MarkBaseFrame")
+      {
+        iFirstFrame.release();
+      }
+      CSubject<uint8_t, uint8_t>::SetProperty(key, value);
     }
 
   protected:

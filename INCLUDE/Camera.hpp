@@ -128,14 +128,44 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       return iPaused;
     }
 
-    void SetDetectorProperty(const std::string& key, const std::string& value)
+    virtual void SetProperty(const std::string& key, const std::string& value) override
     {
-      iDetector->SetProperty(key, value);
+      if (key == "transport")
+      {
+        if (value == "tcp")
+        {
+          putenv("OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;tcp");
+        }
+        else if (value == "udp")
+        {
+          putenv("OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp");
+        }
+        else
+        {
+          return;
+        }
+      }
+      else if (key == "bbarea" ||
+               key == "MarkBaseFrame" ||
+               key == "exhzbb")
+      {
+        iDetector->SetProperty(key, value);
+        return;
+      }
+
+      CSubject<uint8_t, uint8_t>::SetProperty(key, value);
     }
 
-    std::string GetDetectorProperty(const std::string& key)
+    std::string GetProperty(const std::string& key)
     {
-      return iDetector->GetProperty(key);
+      if (key == "bbarea" ||
+          key == "MarkBaseFrame" ||
+          key == "exhzbb")
+      {
+        return iDetector->GetProperty(key);
+      }
+
+      return CSubject<uint8_t, uint8_t>::GetProperty(key);
     }
 
     void Run(void)
@@ -170,7 +200,9 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
           cvtColor(frame, frame, cv::COLOR_BGRA2BGR);
         }
 
-        if ((iSource->GetCurrentOffset() % GetPropertyAsInt("skipcount")) == 0)
+        auto skipcount = GetPropertyAsInt("skipcount");
+
+        if ((iSource->GetCurrentOffset() % (skipcount + 1)) == 0)
         {
           cv::Mat temp = frame.clone();
           /*

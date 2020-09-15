@@ -51,7 +51,7 @@ copy C:\Program Files (x86)\IntelSWTools\compilers_and_libraries\windows\redist\
 copy C:\Program Files (x86)\IntelSWTools\compilers_and_libraries\windows\redist\intel64_win\compiler\libiomp5md.dll
 to the run folder or 
 
-set path=%path%;C:\Program Files (x86)\IntelSWTools\compilers_and_libraries\windows\redist\intel64_win\tbb\vc_mt;C:\Program Files (x86)\IntelSWTools\compilers_and_libraries\windows\redist\intel64_win\compiler\
+set path=%path%;C:\Program Files (x86)\IntelSWTools\compilers_and_libraries\windows\redist\intel64_win\tbb\vc_mt;C:\Program Files (x86)\IntelSWTools\compilers_and_libraries\windows\redist\intel64_win\compiler\;C:\opencv\build\install\x64\vc16\bin
 
 #dlib
 

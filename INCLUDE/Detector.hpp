@@ -6,7 +6,9 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/dnn.hpp>
 
-class CDetector
+#include <CSubject.hpp>
+
+class CDetector : public NPL::CSubject<uint8_t, uint8_t>
 {
   public:
 
@@ -27,9 +29,26 @@ class CDetector
         iWeightFile = "./MODELS/" + weight;
       }
 
-      iNetwork = cv::dnn::readNet(iConfigFile, iWeightFile);
-      // iNetwork.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
-      // iNetwork.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+      try
+      {
+        iNetwork = cv::dnn::readNet(iConfigFile, iWeightFile);
+      }
+      catch(const std::exception& e)
+      {
+        std::cerr << e.what() << " : readNet failed\n";
+      }
+
+      try
+      {
+        iNetwork.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+        iNetwork.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+      }
+      catch(const std::exception& e)
+      {
+        std::cerr << e.what() << "\n";
+        iNetwork.setPreferableTarget(cv::dnn::DNN_TARGET_OPENCL);
+        iNetwork.setPreferableBackend(cv::dnn::DNN_BACKEND_INFERENCE_ENGINE);
+      }      
     }
 
     virtual ~CDetector() {}
@@ -45,7 +64,6 @@ class CDetector
     std::string iWeightFile;
 
     cv::dnn::Net iNetwork;
-    
 };
 
 using SPCDetector = std::shared_ptr<CDetector>;
@@ -250,7 +268,11 @@ class BackgroundSubtractor : public CDetector
 {
   public:
 
-    BackgroundSubtractor() : CDetector() {}
+    BackgroundSubtractor() : CDetector()
+    {
+      SetProperty("AreaThreshold", "1000");
+      SetProperty("ExcludeHorizontalBB", "1");
+    }
 
     virtual std::vector<cv::Rect2d> Detect(cv::Mat& frame) override
     {
@@ -276,13 +298,22 @@ class BackgroundSubtractor : public CDetector
 
       cv::findContours(dilate, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
+      auto& areaThreshold = GetProperty("AreaThreshold");
+      auto& filterHBB = GetProperty("ExcludeHorizontalBB");
+
       for (size_t i = 0; i < contours.size(); i++) 
       {
-        if (cv::contourArea(contours[i]) < 1000) continue;
+        if (cv::contourArea(contours[i]) < std::stoi(areaThreshold))
+        {
+          continue;
+        }
 
         auto bb = cv::boundingRect(contours[i]);
 
-        if (bb.width > bb.height) continue;
+        if ((filterHBB == "1") && (bb.width > bb.height)) 
+        {
+          continue;
+        }
 
         bool skip = false;
 
@@ -303,13 +334,13 @@ class BackgroundSubtractor : public CDetector
           detections.push_back(bb);
         }
       }
+
       return detections;
     }
-  
+
   protected:
 
     cv::Mat iFirstFrame;
-
 };
 
 #endif

@@ -22,7 +22,10 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
     CCamera(const std::string& source, const std::string& target, const std::string& tracker)
     {
-	  putenv("OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp");
+      SetProperty("skipcount", "1");
+      SetProperty("rtsp_transport", "udp");
+	    putenv("OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp");
+
       if (isalpha(source[0]))
       {
         iSource = std::make_shared<CSource>(source);
@@ -125,14 +128,14 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       return iPaused;
     }
 
-    void SetSkipCount(int count = 0)
+    void SetDetectorProperty(const std::string& key, const std::string& value)
     {
-      iSkipCount = count;
+      iDetector->SetProperty(key, value);
     }
-    
-    int GetSkipCount()
+
+    std::string GetDetectorProperty(const std::string& key)
     {
-      return iSkipCount;
+      return iDetector->GetProperty(key);
     }
 
     void Run(void)
@@ -167,7 +170,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
           cvtColor(frame, frame, cv::COLOR_BGRA2BGR);
         }
 
-        if (iSource->GetCurrentOffset() % GetSkipCount() == 0)
+        if ((iSource->GetCurrentOffset() % GetPropertyAsInt("skipcount")) == 0)
         {
           cv::Mat temp = frame.clone();
           /*
@@ -177,7 +180,8 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
             [this, &frame](auto& tc)
             {
               return iCounter->ProcessTrail(tc.iTrail, frame);
-            });
+            }
+          );
           /*
            * run the detector and filter out 
            * tracker updated overlapping rois
@@ -247,10 +251,6 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
     bool iPaused = false;
 
-    int iSkipCount = 1;
-
-    TOnCameraEventCbk iOnCameraEventCbk = nullptr;
-
     std::thread iRunThread;
 
     SPCSource   iSource;
@@ -260,6 +260,8 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
     SPCCounter  iCounter;
 
     SPCDetector iDetector;
+
+    TOnCameraEventCbk iOnCameraEventCbk = nullptr;    
 };
 
 using SPCCamera = std::shared_ptr<CCamera>;

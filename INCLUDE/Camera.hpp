@@ -22,7 +22,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
     CCamera(const std::string& source, const std::string& target, const std::string& tracker)
     {
-      SetProperty("skipcount", "1");
+      SetProperty("skipcount", "0");
       SetProperty("rtsp_transport", "udp");
 	    putenv("OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp");
 
@@ -211,15 +211,18 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
           iTracker->UpdateTrackingContexts(temp,
             [this, &frame](auto& tc)
             {
-              return iCounter->ProcessTrail(tc.iTrail, frame);
+              if (GetName() == "CV")
+              {
+                return iCounter->ProcessTrail(tc.iTrail, frame);
+              }
+              return false;
             }
           );
-          /*
-           * run the detector and filter out 
-           * tracker updated overlapping rois
-           */
-          auto detections = iDetector->Detect(temp);
 
+          auto detections = iDetector->Detect(temp);
+          /*
+           * exclude any detections for this frame which overlap with any tracker's context
+           */
           for (int i = (detections.size() - 1); detections.size() && i >= 0; i--)
           {
             if (iTracker->DoesROIOverlapAnyContext(detections[i], frame))
@@ -227,7 +230,9 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
               detections.erase(detections.begin() + i);
             }
           }
-
+          /*
+           * start tracking all new detections
+           */
           for (auto& roi : detections)
           {
             iTracker->AddNewTrackingContext(temp, roi);
@@ -237,9 +242,10 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
         iTracker->RenderTrackingContextsPath(frame);
         iTracker->RenderTrackingContextsDisplacement(frame);
 
-        iCounter->DisplayCounts(frame);
-
-        cv::line(frame, iCounter->GetRefStartPoint(frame), iCounter->GetRefEndPoint(frame), cv::Scalar(0, 0, 255), 1);
+        if (GetName() == "CV")
+        {
+          iCounter->DisplayRefLineAndCounts(frame);
+        }
 
         {
           std::lock_guard<std::mutex> lg(iLock);

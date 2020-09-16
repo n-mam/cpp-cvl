@@ -115,8 +115,9 @@ class CCounter
       return std::make_tuple(u, d, l, r);
     }
 
-    void DisplayCounts(const cv::Mat& m)
+    void DisplayRefLineAndCounts(cv::Mat& m)
     {
+      cv::line(m, GetRefStartPoint(m), GetRefEndPoint(m), cv::Scalar(0, 0, 255), 1);
       cv::putText(m, "u : " + std::to_string(up), cv::Point(5, 30), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 0, 0), 1);
       cv::putText(m, "d : " + std::to_string(down), cv::Point(5, 50), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 0, 0), 1);
       cv::putText(m, "l : " + std::to_string(left), cv::Point(5, 70), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 0, 0), 1);

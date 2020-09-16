@@ -38,17 +38,17 @@ class CDetector : public NPL::CSubject<uint8_t, uint8_t>
         std::cerr << e.what() << " : readNet failed\n";
       }
 
-      // try
-      // {
-      //   iNetwork.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
-      //   iNetwork.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
-      // }
-      // catch(const std::exception& e)
-      // {
-      //   std::cerr << e.what() << "\n";
-      //   iNetwork.setPreferableTarget(cv::dnn::DNN_TARGET_OPENCL);
-      //   iNetwork.setPreferableBackend(cv::dnn::DNN_BACKEND_INFERENCE_ENGINE);
-      // }      
+      try
+      {
+        iNetwork.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+        iNetwork.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+      }
+      catch(const std::exception& e)
+      {
+        std::cerr << e.what() << "\n";
+        iNetwork.setPreferableTarget(cv::dnn::DNN_TARGET_OPENCL);
+        iNetwork.setPreferableBackend(cv::dnn::DNN_BACKEND_INFERENCE_ENGINE);
+      }      
     }
 
     virtual ~CDetector() {}
@@ -271,7 +271,7 @@ class BackgroundSubtractor : public CDetector
     BackgroundSubtractor() : CDetector()
     {
       SetProperty("bbarea", "100");
-      SetProperty("exhzbb", "false");
+      SetProperty("exhzbb", "0");
     }
 
     virtual std::vector<cv::Rect2d> Detect(cv::Mat& frame) override

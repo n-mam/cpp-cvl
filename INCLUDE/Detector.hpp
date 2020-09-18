@@ -6,6 +6,8 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/dnn.hpp>
 
+#include <opencv2/bgsegm.hpp>
+
 #include <CSubject.hpp>
 
 class CDetector : public NPL::CSubject<uint8_t, uint8_t>
@@ -268,27 +270,27 @@ class BackgroundSubtractor : public CDetector
 {
   public:
 
-    BackgroundSubtractor() : CDetector()
+    BackgroundSubtractor(const std::string& algo) : CDetector()
     {
-      SetProperty("bbarea", "100");
-      SetProperty("exhzbb", "0");
+      SetProperty("bbarea", "1500");
+      SetProperty("exhzbb", "1");
+
+      if (algo == "mog") {
+         pBackgroundSubtractor = cv::bgsegm::createBackgroundSubtractorMOG();
+      } else if (algo == "cnt") {
+         pBackgroundSubtractor = cv::bgsegm::createBackgroundSubtractorCNT();
+      } else if (algo == "gmg") {
+         pBackgroundSubtractor = cv::bgsegm::createBackgroundSubtractorGMG();
+      } else if (algo == "gsoc") {
+         pBackgroundSubtractor = cv::bgsegm::createBackgroundSubtractorGSOC();
+      } else if (algo == "lsbp") {
+         pBackgroundSubtractor = cv::bgsegm::createBackgroundSubtractorLSBP();
+      }
     }
 
     virtual std::vector<cv::Rect2d> Detect(cv::Mat& frame) override
     {
-      cv::Mat gray, blur, delta, thresh, dilate;
-
-      cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
-      cv::GaussianBlur(gray, blur, cv::Size(21,21), 0);
-
-      if (iFirstFrame.empty())
-      {
-        iFirstFrame = blur;
-      }
-
-	    cv::absdiff(iFirstFrame, blur, delta);
-	    cv::threshold(delta, thresh, 25, 255, cv::THRESH_BINARY);
-      cv::dilate(thresh, dilate, cv::Mat(), cv::Point(-1, -1), 2);
+      cv::Mat fgMask;
 
       std::vector<
         std::vector<cv::Point>
@@ -296,7 +298,9 @@ class BackgroundSubtractor : public CDetector
 
       std::vector<cv::Rect2d> detections;
 
-      cv::findContours(dilate, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+      pBackgroundSubtractor->apply(frame, fgMask, 0.8);
+
+      cv::findContours(fgMask, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
       auto areaThreshold = GetPropertyAsInt("bbarea");
       auto excludeHBB = GetPropertyAsInt("exhzbb");
@@ -349,6 +353,7 @@ class BackgroundSubtractor : public CDetector
 
   protected:
 
+    cv::Ptr<cv::BackgroundSubtractor> pBackgroundSubtractor = nullptr;
     cv::Mat iFirstFrame;
 };
 

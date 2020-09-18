@@ -86,7 +86,12 @@ class CTracker
           cv::line(m, f, b, cv::Scalar(0, 255, 0), 1);
         }
 
-        cv::rectangle(m, tc.iTrail.back(), cv::Scalar(0, 0, 255), 1, 1); //tracking red
+        auto& bb = tc.iTrail.back();
+        
+        cv::rectangle(m, bb, cv::Scalar(0, 0, 255), 1, 1); //tracking red
+        cv::putText(m, std::to_string((int)(bb.width * bb.height)),
+            cv::Point(bb.x, bb.y - 5), cv::FONT_HERSHEY_SIMPLEX, 
+            0.4, cv::Scalar(0, 0, 255), 1);
       }
     }
 
@@ -97,6 +102,9 @@ class CTracker
         if (DoesRectOverlapRect(roi, tc.iTrail.back()))
         {
           cv::rectangle(m, roi, cv::Scalar(255, 0, 0 ), 1, 1);  // detection blue
+          cv::putText(m, std::to_string((int)(roi.width * roi.height)),
+            cv::Point(roi.x, roi.y - 5), cv::FONT_HERSHEY_SIMPLEX, 
+            0.4, cv::Scalar(255, 0, 0), 1);
           return true;
         }
       }

@@ -20,7 +20,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 {
   public:
 
-    CCamera(const std::string& source, const std::string& target, const std::string& tracker)
+    CCamera(const std::string& source, const std::string& target, const std::string& algo, const std::string& tracker)
     {
       SetProperty("skipcount", "0");
       SetProperty("rtsp_transport", "udp");
@@ -47,7 +47,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       }
       else if (target == "mocap")
       {
-        iDetector = std::make_shared<BackgroundSubtractor>();
+        iDetector = std::make_shared<BackgroundSubtractor>(algo);
       }
 
       iCounter = std::make_shared<CCounter>();

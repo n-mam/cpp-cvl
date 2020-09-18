@@ -6,7 +6,7 @@ int main(int argc, char *argv[])
 {
   putenv("cpp-cvl-test=true");
 
-  auto camera = CVL::make_camera(argv[1], "person", "CSRT");
+  auto camera = CVL::make_camera(argv[1], "person", "gmg", "CSRT");
 
   camera->SetName("CV");
 

@@ -285,6 +285,8 @@ class BackgroundSubtractor : public CDetector
          pBackgroundSubtractor = cv::bgsegm::createBackgroundSubtractorGSOC();
       } else if (algo == "lsbp") {
          pBackgroundSubtractor = cv::bgsegm::createBackgroundSubtractorLSBP();
+      } else {
+         pBackgroundSubtractor = cv::bgsegm::createBackgroundSubtractorGMG();
       }
     }
 

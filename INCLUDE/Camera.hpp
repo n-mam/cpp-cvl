@@ -4,7 +4,7 @@
 #include <thread>
 #include <chrono>
 #include <functional>
-
+ 
 using TOnCameraEventCbk = std::function<void (const std::string&, const std::string&)>;
 
 #include <Source.hpp>

@@ -79,7 +79,7 @@ class CTracker
     {
       for (auto& tc : iTrackingContexts)
       {
-        for (int i = 1; i < tc.iTrail.size() - 1; i++)
+        for (size_t i = 1; i < tc.iTrail.size() - 1; i++)
         {
           auto f = GetRectCenter(tc.iTrail[i]);
           auto b = GetRectCenter(tc.iTrail[i-1]);
@@ -90,7 +90,7 @@ class CTracker
         
         cv::rectangle(m, bb, cv::Scalar(0, 0, 255), 1, 1); //tracking red
         cv::putText(m, std::to_string((int)(bb.width * bb.height)),
-            cv::Point(bb.x, bb.y - 5), cv::FONT_HERSHEY_SIMPLEX, 
+            cv::Point((int)bb.x, (int)(bb.y - 5)), cv::FONT_HERSHEY_SIMPLEX, 
             0.4, cv::Scalar(0, 0, 255), 1);
       }
     }
@@ -103,7 +103,7 @@ class CTracker
         {
           cv::rectangle(m, roi, cv::Scalar(255, 0, 0 ), 1, 1);  // detection blue
           cv::putText(m, std::to_string((int)(roi.width * roi.height)),
-            cv::Point(roi.x, roi.y - 5), cv::FONT_HERSHEY_SIMPLEX, 
+            cv::Point((int)roi.x, (int)(roi.y - 5)), cv::FONT_HERSHEY_SIMPLEX, 
             0.4, cv::Scalar(255, 0, 0), 1);
           return true;
         }
@@ -186,15 +186,15 @@ class OpenCVTracker : public CTracker
     {
       if (!iTrackingContexts.size()) return;
 
-      for (int i = (iTrackingContexts.size() - 1); i >= 0; i--)
+      for (size_t i = iTrackingContexts.size(); i > 0; i--)
       {
-        auto& tc = iTrackingContexts[i];
+        auto& tc = iTrackingContexts[i - 1];
 
         if (tc.IsFrozen())
         {
           PurgeAndSaveTrackingContext(tc);
-          iTrackingContexts.erase(iTrackingContexts.begin() + i);          
-          std::cout << "removed frozen tc\n";
+          iTrackingContexts.erase(iTrackingContexts.begin() + (i - 1));          
+          //std::cout << "removed frozen tc\n";
           continue;
         }
 
@@ -216,15 +216,15 @@ class OpenCVTracker : public CTracker
           else
           {
             PurgeAndSaveTrackingContext(tc);
-            iTrackingContexts.erase(iTrackingContexts.begin() + i);
-            std::cout << "Tracker at " << i << " is out of the bounds, size : " << iTrackingContexts.size() << "\n";
+            iTrackingContexts.erase(iTrackingContexts.begin() + (i - 1));
+            //std::cout << "Tracker at " << (i - 1) << " is out of the bounds, size : " << iTrackingContexts.size() << "\n";
           }
         }
         else
         {
           PurgeAndSaveTrackingContext(tc);
-          iTrackingContexts.erase(iTrackingContexts.begin() + i);
-          std::cout << "Tracker at " << i << " lost, size : " << iTrackingContexts.size() << "\n";
+          iTrackingContexts.erase(iTrackingContexts.begin() + (i - 1));
+          //std::cout << "Tracker at " << (i - 1) << " lost, size : " << iTrackingContexts.size() << "\n";
         }
       }
     }

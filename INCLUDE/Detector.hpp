@@ -87,7 +87,7 @@ class AgeDetector : public CDetector
         false);
       iNetwork.setInput(blob);
       std::vector<float> agePreds = iNetwork.forward();
-      int max_indice_age = std::distance(agePreds.begin(), max_element(agePreds.begin(), agePreds.end()));
+      auto max_indice_age = std::distance(agePreds.begin(), max_element(agePreds.begin(), agePreds.end()));
       std::string age = ageList[max_indice_age];
       std::cout << "age : " << age << "\n";
       return {};
@@ -115,7 +115,7 @@ class GenderDetector : public CDetector
         false);
       iNetwork.setInput(blob);
       std::vector<float> genderPreds = iNetwork.forward();
-      int max_index_gender = std::distance(genderPreds.begin(), max_element(genderPreds.begin(), genderPreds.end()));
+      auto max_index_gender = std::distance(genderPreds.begin(), max_element(genderPreds.begin(), genderPreds.end()));
       std::string gender = genderList[max_index_gender];
       std::cout << "gender : " << gender << "\n";
       return {};
@@ -272,7 +272,7 @@ class BackgroundSubtractor : public CDetector
 
     BackgroundSubtractor(const std::string& algo) : CDetector()
     {
-      SetProperty("bbarea", "1500");
+      SetProperty("bbarea", "10");
       SetProperty("exhzbb", "1");
 
       if (algo == "mog") {
@@ -346,17 +346,13 @@ class BackgroundSubtractor : public CDetector
 
     virtual void SetProperty(const std::string& key, const std::string& value) override
     {
-      if (key == "MarkBaseFrame")
-      {
-        iFirstFrame.release();
-      }
       CSubject<uint8_t, uint8_t>::SetProperty(key, value);
     }
 
   protected:
 
     cv::Ptr<cv::BackgroundSubtractor> pBackgroundSubtractor = nullptr;
-    cv::Mat iFirstFrame;
+
 };
 
 #endif

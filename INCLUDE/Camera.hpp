@@ -23,6 +23,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
     CCamera(const std::string& source, const std::string& target, const std::string& algo, const std::string& tracker)
     {
       SetProperty("skipcount", "0");
+
       SetProperty("rtsp_transport", "udp");
 	    putenv("OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp");
 
@@ -146,7 +147,6 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
         }
       }
       else if (key == "bbarea" ||
-               key == "MarkBaseFrame" ||
                key == "exhzbb")
       {
         iDetector->SetProperty(key, value);
@@ -159,7 +159,6 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
     std::string GetProperty(const std::string& key)
     {
       if (key == "bbarea" ||
-          key == "MarkBaseFrame" ||
           key == "exhzbb")
       {
         return iDetector->GetProperty(key);
@@ -221,15 +220,19 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
           auto detections = iDetector->Detect(temp);
           /*
-           * exclude any detections for this frame which overlap with any tracker's context
+           * exclude detections which overlap with any tracker's context
            */
-          for (int i = (detections.size() - 1); detections.size() && i >= 0; i--)
+          if (detections.size())
           {
-            if (iTracker->DoesROIOverlapAnyContext(detections[i], frame))
+            for (size_t i = detections.size(); i > 0; i--)
             {
-              detections.erase(detections.begin() + i);
+              if (iTracker->DoesROIOverlapAnyContext(detections[i - 1], frame))
+              {
+                detections.erase(detections.begin() + (i - 1));
+              }
             }
           }
+
           /*
            * start tracking all new detections
            */

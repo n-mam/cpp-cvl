@@ -6,14 +6,18 @@ int main(int argc, char *argv[])
 {
   putenv("cpp-cvl-test=true");
 
-  auto camera = CVL::make_camera(argv[1], "mocap", "gmg", "CSRT");
+  auto camera = CVL::make_camera(argv[1], "person", "gmg", "CSRT");
 
   camera->SetName("CV");
+
+  camera->SetProperty("skipcount", "0");
+  camera->SetProperty("bbarea", "1000");
 
   camera->Start(
     [](const std::string& e, const std::string& data) {
       std::cout << "Camera event callback : " << e << " data : " << data << "\n";
-    });
+    }
+  );
 
   getchar();
 

@@ -40,17 +40,18 @@ class CDetector : public NPL::CSubject<uint8_t, uint8_t>
         std::cerr << e.what() << " : readNet failed\n";
       }
 
-      // try
-      // {
-      //   iNetwork.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
-      //   iNetwork.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
-      // }
-      // catch(const std::exception& e)
-      // {
-      //   std::cerr << e.what() << "\n";
-      //   iNetwork.setPreferableTarget(cv::dnn::DNN_TARGET_OPENCL);
-      //   iNetwork.setPreferableBackend(cv::dnn::DNN_BACKEND_INFERENCE_ENGINE);
-      // }      
+    	if (cv::cuda::getCudaEnabledDeviceCount())
+	    {
+		    iNetwork.setPreferableBackend(cv::dnn::Backend::DNN_BACKEND_CUDA);
+		    iNetwork.setPreferableTarget(cv::dnn::Target::DNN_TARGET_CUDA);
+		    std::cout << "CUDA backend and target enabled for inference." << std::endl;
+	    }
+	    else
+	    {
+		    iNetwork.setPreferableBackend(cv::dnn::Backend::DNN_BACKEND_DEFAULT);
+		    iNetwork.setPreferableTarget(cv::dnn::Target::DNN_TARGET_OPENCL);
+		    std::cout << "OpenCL_FP16 backend and target enabled for inference." << std::endl;
+	    }
     }
 
     virtual ~CDetector() {}

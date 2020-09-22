@@ -27,13 +27,13 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       SetProperty("rtsp_transport", "udp");
 	    putenv("OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp");
 
-      if (isalpha(source[0]))
+      if (isdigit(source[0]))
       {
-        iSource = std::make_shared<CSource>(source);
+        iSource = std::make_shared<CSource>(std::stoi(source));
       }
       else
       {
-        iSource = std::make_shared<CSource>(std::stoi(source));
+        iSource = std::make_shared<CSource>(source);
       }
 
       iTracker = std::make_shared<OpenCVTracker>(tracker);

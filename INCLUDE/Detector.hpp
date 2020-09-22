@@ -46,12 +46,12 @@ class CDetector : public NPL::CSubject<uint8_t, uint8_t>
 		    iNetwork.setPreferableTarget(cv::dnn::Target::DNN_TARGET_CUDA);
 		    std::cout << "CUDA backend and target enabled for inference." << std::endl;
 	    }
-	    else
-	    {
-		    iNetwork.setPreferableBackend(cv::dnn::Backend::DNN_BACKEND_DEFAULT);
-		    iNetwork.setPreferableTarget(cv::dnn::Target::DNN_TARGET_OPENCL);
-		    std::cout << "OpenCL_FP16 backend and target enabled for inference." << std::endl;
-	    }
+	    // else
+	    // {
+		  //   iNetwork.setPreferableBackend(cv::dnn::Backend::DNN_BACKEND_OPENCV);
+		  //   iNetwork.setPreferableTarget(cv::dnn::Target::DNN_TARGET_OPENCL);
+		  //   std::cout << "OpenCL_FP16 backend and target enabled for inference." << std::endl;
+	    // }
     }
 
     virtual ~CDetector() {}

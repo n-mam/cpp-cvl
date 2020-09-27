@@ -78,6 +78,7 @@
         "typeindex": "cpp",
         "variant": "cpp",
         "xlocbuf": "cpp",
-        "xlocmes": "cpp"
+        "xlocmes": "cpp",
+        "*.ipp": "cpp"
     }
 }

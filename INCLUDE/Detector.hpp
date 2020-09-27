@@ -75,8 +75,7 @@ class AgeDetector : public CDetector
 {
   public:
 
-    AgeDetector() :
-     CDetector("age_net.caffemodel", "deploy_age.prototxt") 
+    AgeDetector() : CDetector("age_net.caffemodel", "deploy_age.prototxt") 
     {
     }
 
@@ -103,8 +102,7 @@ class GenderDetector : public CDetector
 {
   public:
 
-    GenderDetector() :
-     CDetector("gender_net.caffemodel", "deploy_gender.prototxt") 
+    GenderDetector() : CDetector("gender_net.caffemodel", "deploy_gender.prototxt") 
     {
     }
 
@@ -131,8 +129,7 @@ class FaceDetector : public CDetector
 {
   public:
 
-    FaceDetector() :
-     CDetector("ResNetSSD_deploy.prototxt", "ResNetSSD_deploy.caffemodel") 
+    FaceDetector() : CDetector("ResNetSSD_deploy.prototxt", "ResNetSSD_deploy.caffemodel") 
     {
       iAgeDetector = std::make_shared<AgeDetector>();
       iGenderDetector = std::make_shared<GenderDetector>();

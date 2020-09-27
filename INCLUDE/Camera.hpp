@@ -202,12 +202,11 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
         auto skipcount = GetPropertyAsInt("skipcount");
 
         if ((iSource->GetCurrentOffset() % (skipcount + 1)) == 0)
-        {
-          cv::Mat temp = frame.clone();
-          /*
+        { /*
            * update all active trackers first
            */
-          iTracker->UpdateTrackingContexts(temp,
+          iTracker->UpdateTrackingContexts(
+            frame,
             [this, &frame](auto& tc)
             {
               if (GetName() == "CV")
@@ -218,7 +217,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
             }
           );
 
-          auto detections = iDetector->Detect(temp);
+          auto detections = iDetector->Detect(frame);
           /*
            * exclude detections which overlap with any tracker's context
            */
@@ -232,13 +231,12 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
               }
             }
           }
-
           /*
            * start tracking all new detections
            */
           for (auto& roi : detections)
           {
-            iTracker->AddNewTrackingContext(temp, roi);
+            iTracker->AddNewTrackingContext(frame, roi);
           }
         }
 

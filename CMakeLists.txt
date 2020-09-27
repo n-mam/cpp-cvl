@@ -3,8 +3,9 @@ project (cpp-cvl)
 find_package(Threads REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(OpenSSL REQUIRED)
-#SET OPENCV_DIR=C:/opencv/build/install
-#SET OPENSSL_ROOT_DIR=C:/vcpkg/installed/x64-windows
+
+# SET OPENCV_DIR=C:/opencv/build/install
+# SET OPENSSL_ROOT_DIR=C:/vcpkg/installed/x64-windows
 
 ADD_EXECUTABLE(Test Test.cpp)
 

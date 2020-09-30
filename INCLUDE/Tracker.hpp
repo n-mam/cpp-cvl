@@ -11,8 +11,10 @@
 
 struct TrackingContext
 {
-  cv::Ptr<cv::Tracker>      iTracker;  // cv tracker
-  std::vector<cv::Rect2d>   iTrail;    // track bb trail
+  cv::Ptr<cv::Tracker> iTracker;   // cv tracker
+
+  std::vector<cv::Rect2d> iTrail;  // track bb trail
+
   bool iSkip = false;
 
   bool IsFrozen(void)
@@ -123,8 +125,11 @@ class CTracker
   protected:
   
     std::string iType;
+
     TOnCameraEventCbk iOnCameraEventCbk = nullptr;
+
     std::vector<TrackingContext> iTrackingContexts;
+
     std::vector<TrackingContext> iPurgedContexts;
 
     virtual void PurgeAndSaveTrackingContext(TrackingContext& tc)

@@ -369,10 +369,10 @@ int __cdecl fd_main(int argc, char *argv[]) {
             //  Visualizing results
             if (!FLAGS_no_show || !FLAGS_o.empty()) {
                 out.str("");
-                out << "Total image throughput: " << std::fixed << std::setprecision(2)
+                out << std::fixed << std::setprecision(2)
                     << 1000.f / (timer["total"].getSmoothedDuration()) << " fps";
-                cv::putText(prev_frame, out.str(), THROUGHPUT_METRIC_POSITION, cv::FONT_HERSHEY_SIMPLEX, 0.4,
-                            cv::Scalar(255, 0, 0), 1);
+                cv::putText(prev_frame, out.str(), THROUGHPUT_METRIC_POSITION, cv::FONT_HERSHEY_SIMPLEX, 1,
+                            cv::Scalar(255, 0, 0), 2);
 
                 // drawing faces
                 visualizer->draw(prev_frame, faces);

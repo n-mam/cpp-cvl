@@ -207,8 +207,8 @@ void Visualizer::drawFace(cv::Mat& img, Face::Ptr f, bool drawEmotionBar) {
                 out.str(),
                 cv::Point2f(static_cast<float>(f->_location.x), static_cast<float>(f->_location.y - 20)),
                 cv::FONT_HERSHEY_SIMPLEX,
-                0.4,
-                genderColor, 1);
+                1,
+                genderColor, 2);
 
     if (f->isHeadPoseEnabled()) {
         cv::Point3f center(static_cast<float>(f->_location.x + f->_location.width / 2),

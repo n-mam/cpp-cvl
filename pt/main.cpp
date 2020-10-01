@@ -239,13 +239,13 @@ int __cdecl pt_main(int argc, char * argv[]) {
 
                 // Drawing all detected objects on a frame by BLUE COLOR
                 for (const auto &detection : detections) {
-                    cv::rectangle(frame, detection.rect, cv::Scalar(255, 0, 0), 1.5);
+                    cv::rectangle(frame, detection.rect, cv::Scalar(255, 0, 0), 2);
                 }
 
                 // Drawing tracked detections only by RED color and print ID and detection
                 // confidence level.
                 for (const auto &detection : tracker->TrackedDetections()) {
-                    cv::rectangle(frame, detection.rect, cv::Scalar(0, 0, 255), 1.5);
+                    cv::rectangle(frame, detection.rect, cv::Scalar(0, 0, 255), 2);
                     std::string text = std::to_string(detection.object_id) +
                         " conf: " + std::to_string(detection.confidence);
                     cv::putText(frame, text, detection.rect.tl(), cv::FONT_HERSHEY_SIMPLEX,

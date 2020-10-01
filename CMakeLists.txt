@@ -1,5 +1,7 @@
 project (cpp-cvl)
 
+# set(CMAKE_VERBOSE_MAKEFILE ON)
+
 find_package(Threads REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(OpenSSL REQUIRED)

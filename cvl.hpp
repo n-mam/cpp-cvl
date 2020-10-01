@@ -7,7 +7,6 @@
 #include <CameraCV.hpp>
 #endif
 
-
 namespace CVL 
 {
 

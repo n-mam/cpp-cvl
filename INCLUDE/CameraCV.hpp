@@ -5,7 +5,7 @@
 #include <chrono>
 #include <functional>
 
-using TOnCameraEventCbk = std::function<void (const std::string&, const std::string&)>;
+using TOnCameraEventCbk = std::function<void (const std::string&, const std::string&, std::vector<uint8_t>&)>;
 
 #include <Source.hpp>
 #include <Tracker.hpp>
@@ -14,7 +14,6 @@ using TOnCameraEventCbk = std::function<void (const std::string&, const std::str
 #include <Geometry.hpp>
 
 #include <CSubject.hpp>
-#include <Encryption.hpp>
 
 class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 {
@@ -255,9 +254,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
           {
             std::vector<uchar> buf;
             cv::imencode(".jpg", frame, buf);
-            char encoded[360*500];
-            int n = Base64Encode((unsigned char *)encoded, buf.data(), buf.size());
-            iOnCameraEventCbk("play", std::string(encoded, n));
+            iOnCameraEventCbk("play", "", buf);
           }
           else
           {

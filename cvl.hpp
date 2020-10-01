@@ -9,15 +9,17 @@
 
 namespace CVL 
 {
-
+ #ifdef OPENVINO
+  auto make_camera(const std::string& source, const std::string& target)
+  {
+    return std::make_shared<CCamera>(source, target);
+  }
+ #else
   auto make_camera(const std::string& source, const std::string& target, const std::string& algo, const std::string& tracker)
   {
-    #ifdef OPENVINO
-      return std::make_shared<CCamera>(source, target);
-    #else
-      return std::make_shared<CCamera>(source, target, algo, tracker);
-    #endif
+    return std::make_shared<CCamera>(source, target, algo, tracker);
   }
+ #endif
 
 }
 

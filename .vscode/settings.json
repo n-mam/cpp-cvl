@@ -79,6 +79,8 @@
         "variant": "cpp",
         "xlocbuf": "cpp",
         "xlocmes": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "random": "cpp",
+        "resumable": "cpp"
     }
 }

@@ -8,7 +8,7 @@
             "name": "Test CVL",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/Release/Test.exe",
+            "program": "${workspaceFolder}/build/intel64/Release/Test.exe",
             "args": ["f:\\tv2.mp4"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",

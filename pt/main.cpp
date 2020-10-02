@@ -100,20 +100,26 @@ bool ParseAndCheckCommandLine(int argc, char *argv[]) {
 
 /** nmam+ */
 
-bool iPTStop = false;
-TOnCameraEventCbk iPTCbk = nullptr;
+bool iStop = false;
+bool iPause = false;
+TOnCameraEventCbk iCameraCbk = nullptr;
 
 __declspec(dllexport)
 void __cdecl pt_stop(void)
 {
-  iPTStop = true;
-  std::cout <<  pt_stop << " !!!\n";
+  iStop = true;
+}
+
+__declspec(dllexport)
+void __cdecl pt_pause(bool bPause = true)
+{
+  iPause = bPause;
 }
 
 __declspec(dllexport)
 void __cdecl pt_setcbk(TOnCameraEventCbk cbk)
 {
-  iPTCbk = cbk;
+  iCameraCbk = cbk;
 }
 
 void ProcessFrame(cv::Mat& frame)
@@ -125,13 +131,14 @@ void ProcessFrame(cv::Mat& frame)
   }
   std::vector<uint8_t> buf;
   cv::imencode(".jpg", frame, buf);
-  iPTCbk("play", "", buf);
+  iCameraCbk("play", "", buf);
 }
 /** nmam- */
 
 __declspec(dllexport)
 int __cdecl pt_main(int argc, char * argv[]) {
-    iPTStop = false;
+    iStop = false;
+    iPause = false;
     try {
         std::cout << "InferenceEngine: " << GetInferenceEngineVersion() << std::endl;
 
@@ -180,7 +187,7 @@ int __cdecl pt_main(int argc, char * argv[]) {
         std::unique_ptr<PedestrianTracker> tracker =
             CreatePedestrianTracker(reid_model, ie, reid_mode,
                                     should_keep_tracking_info);
-        tracker->iPTCbk = iPTCbk;
+        tracker->iCameraCbk = iCameraCbk;
         cv::VideoCapture cap;
         try {
             int intInput = std::stoi(FLAGS_i);
@@ -217,10 +224,10 @@ int __cdecl pt_main(int argc, char * argv[]) {
         for (int32_t frame_idx = std::max(0, FLAGS_first); 0 > FLAGS_last || frame_idx <= FLAGS_last; ++frame_idx) {
             cv::Mat frame;
             if (!cap.read(frame)) {
-              break;
+                break;
             }
 
-            if (iPTStop) break;
+            if (iStop) break;
 
             pedestrian_detector.submitFrame(frame, frame_idx);
             pedestrian_detector.waitAndFetchResults();
@@ -265,12 +272,17 @@ int __cdecl pt_main(int argc, char * argv[]) {
                 DetectionLog log = tracker->GetDetectionLog(true);
                 SaveDetectionLogToTrajFile(detlog_out, log);
             }
+
+            while (iPause && !iStop)
+            {
+              std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            }
         }
 
-        if (iPTCbk)
+        if (iCameraCbk)
         {
-          iPTCbk("stop", "", std::vector<uchar>());
-          iPTCbk = nullptr;
+          iCameraCbk("stop", "", std::vector<uchar>());
+          iCameraCbk = nullptr;
         }
         
         if (should_keep_tracking_info) {

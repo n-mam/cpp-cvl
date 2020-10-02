@@ -13,14 +13,17 @@ using TOnCameraEventCbk = std::function<void (const std::string&, const std::str
 // face detection : age and gender
 int fd_main(int argc, char *argv[]);
 void fd_setcbk(TOnCameraEventCbk cbk);
+void fd_pause(bool);
 void fd_stop(void);
 // pedestrian tracker
 int pt_main(int argc, char *argv[]);
 void pt_setcbk(TOnCameraEventCbk cbk);
+void pt_pause(bool);
 void pt_stop(void);
 // face recognition
 int fr_main(int argc, char *argv[]);
 void fr_setcbk(TOnCameraEventCbk cbk);
+void fr_pause(bool);
 void fr_stop(void);
 
 class CCamera : public NPL::CSubject<uint8_t, uint8_t>
@@ -82,11 +85,35 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
     void Play(void)
     {
       std::lock_guard<std::mutex> lg(iLock);
+      if (iTarget == "face")
+      {
+        fd_pause(false);  
+      }
+      else if (iTarget == "fr") 
+      {
+        fr_pause(false); 
+      }
+      else if (iTarget == "person")
+      {
+        pt_pause(false);
+      }
     }
 
     void Pause(void)
     {
       std::lock_guard<std::mutex> lg(iLock);
+      if (iTarget == "face")
+      {
+        fd_pause(true);  
+      }
+      else if (iTarget == "fr") 
+      {
+        fr_pause(true); 
+      }
+      else if (iTarget == "person")
+      {
+        pt_pause(true);
+      }
     }
 
     void StopPlay(void)

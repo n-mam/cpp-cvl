@@ -39,6 +39,8 @@ public:
     void emotionsEnable(bool value);
     void headPoseEnable(bool value);
     void landmarksEnable(bool value);
+    void incrDetCount(void) { _detCount++; }
+    size_t getDetCount() { return _detCount; }
 
     bool isAgeGenderEnabled();
     bool isEmotionsEnabled();
@@ -51,6 +53,7 @@ public:
 
 private:
     size_t _id;
+    size_t _detCount = 0;
     float _age;
     float _maleScore;
     float _femaleScore;

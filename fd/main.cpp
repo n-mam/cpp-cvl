@@ -74,19 +74,26 @@ bool ParseAndCheckCommandLine(int argc, char *argv[]) {
 
 using TOnCameraEventCbk = std::function<void (const std::string&, const std::string&, std::vector<uint8_t>&)>;
 
-bool iFDStop = false;
-TOnCameraEventCbk iFDCbk = nullptr;
+bool iStop = false;
+bool iPause = false;
+TOnCameraEventCbk iCameraCbk = nullptr;
 
 __declspec(dllexport)
 void __cdecl fd_stop(void)
 {
-  iFDStop = true;
+  iStop = true;
+}
+
+__declspec(dllexport)
+void __cdecl fd_pause(bool bPause = true)
+{
+  iPause = bPause;
 }
 
 __declspec(dllexport)
 void __cdecl fd_setcbk(TOnCameraEventCbk cbk)
 {
-  iFDCbk = cbk;
+  iCameraCbk = cbk;
 }
 
 void ProcessFrame(cv::Mat& frame)
@@ -98,14 +105,15 @@ void ProcessFrame(cv::Mat& frame)
   }
   std::vector<uint8_t> buf;
   cv::imencode(".jpg", frame, buf);
-  iFDCbk("play", "", buf);
+  iCameraCbk("play", "", buf);
 }
 
 /** nmam- */
 
 __declspec(dllexport)
 int __cdecl fd_main(int argc, char *argv[]) {
-    iFDStop = false;
+    iStop = false;
+    iPause = false;
     try {
         std::cout << "InferenceEngine: " << GetInferenceEngineVersion() << std::endl;
 
@@ -326,7 +334,8 @@ int __cdecl fd_main(int argc, char *argv[]) {
                         std::cout << "added new face " << face->getId() << "\n";
                     } else {
                         prev_faces.remove(face);
-                        std::cout << "prev face match " << face->getId() << "\n";
+                        face->incrDetCount();
+                        std::cout << "prev face match id: " << face->getId() << ", detection count : " << face->getDetCount() << "\n";
                     }
 
                     face->_intensity_mean = intensity_mean;
@@ -406,17 +415,22 @@ int __cdecl fd_main(int argc, char *argv[]) {
                 break;
             } else if (!FLAGS_no_show) {
                 int key = cv::waitKey(delay);
-                if (27 == key || 'Q' == key || 'q' == key || iFDStop) {
+                if (27 == key || 'Q' == key || 'q' == key || iStop) {
                     break;
                 }
                 presenter.handleKey(key);
             }
+
+            while (iPause && !iStop)
+            {
+              std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            }
         }
 
-        if (iFDCbk)
+        if (iCameraCbk)
         {
-          iFDCbk("stop", "", std::vector<uint8_t>());
-          iFDCbk = nullptr;
+          iCameraCbk("stop", "", std::vector<uint8_t>());
+          iCameraCbk = nullptr;
         }
 
         slog::info << "Number of processed frames: " << framesCounter << slog::endl;

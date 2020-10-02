@@ -494,7 +494,7 @@ void PedestrianTracker::DropForgottenTracks() {
               data += std::to_string(pt.x) + " " + std::to_string(pt.y);
             }
 
-            iPTCbk("trail", data, std::vector<uchar>());
+            iCameraCbk("trail", data, std::vector<uchar>());
           }
         }
         else

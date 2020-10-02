@@ -177,7 +177,7 @@ class PedestrianTracker {
 public:
     using Descriptor = std::shared_ptr<IImageDescriptor>;
     using Distance = std::shared_ptr<IDescriptorDistance>;
-    TOnCameraEventCbk iPTCbk = nullptr;
+    TOnCameraEventCbk iCameraCbk = nullptr;
     ///
     /// \brief Constructor that creates an instance of the pedestrian tracker with
     /// parameters.

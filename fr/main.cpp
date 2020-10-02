@@ -552,26 +552,46 @@ bool ParseAndCheckCommandLine(int argc, char *argv[]) {
 
 using TOnCameraEventCbk = std::function<void (const std::string&, const std::string&, std::vector<uint8_t>&)>;
 
-bool iFRStop = false;
-TOnCameraEventCbk iFRCbk = nullptr;
+bool iStop = false;
+bool iPause = false;
+TOnCameraEventCbk iCameraCbk = nullptr;
 
 __declspec(dllexport)
 void __cdecl fr_stop(void)
 {
-  iFRStop = true;
+  iStop = true;
+}
+
+__declspec(dllexport)
+void __cdecl fr_pause(bool bPause = true)
+{
+  iPause = bPause;
 }
 
 __declspec(dllexport)
 void __cdecl fr_setcbk(TOnCameraEventCbk cbk)
 {
-  iFRCbk = cbk;
+  iCameraCbk = cbk;
+}
+
+void ProcessFrame(cv::Mat& frame)
+{
+  if (frame.cols > 600)
+  {
+    auto scale = (float) 600 / frame.cols;
+    cv::resize(frame, frame, cv::Size(0, 0), scale, scale);
+  }
+  std::vector<uint8_t> buf;
+  cv::imencode(".jpg", frame, buf);
+  iCameraCbk("play", "", buf);
 }
 
 /** nmam- */
 
 __declspec(dllexport)
 int __cdecl fr_main(int argc, char* argv[]) {
-    iFRStop = false;
+    iStop = false;
+    iPause = false;
     try {
         /** This demo covers 4 certain topologies and cannot be generalized **/
         slog::info << "InferenceEngine: " << GetInferenceEngineVersion() << slog::endl;
@@ -833,7 +853,7 @@ int __cdecl fr_main(int argc, char* argv[]) {
                 cap.Retrieve(frame);
 
             char key = cv::waitKey(1);
-            if (key == ESC_KEY || iFRStop) {
+            if (key == ESC_KEY || iStop) {
                 break;
             }
             presenter.handleKey(key);
@@ -1035,12 +1055,17 @@ int __cdecl fr_main(int argc, char* argv[]) {
             }
             prev_frame = frame.clone();
             logger.FinalizeFrameRecord();
+
+            while (iPause && !iStop)
+            {
+              std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            }
         }
 
-        if (iFRCbk)
+        if (iCameraCbk)
         {
-          iFRCbk("stop", "", std::vector<uint8_t>());
-          iFRCbk = nullptr;
+          iCameraCbk("stop", "", std::vector<uint8_t>());
+          iCameraCbk = nullptr;
         }
 
         sc_visualizer.Finalize();

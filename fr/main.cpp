@@ -167,8 +167,8 @@ public:
         if (enabled_ && !writer_.isOpened()) {
             cv::putText(frame_,
                         std::to_string(static_cast<int>(fps)) + " fps",
-                        cv::Point(10, 50), cv::FONT_HERSHEY_SIMPLEX, 0.4,
-                        color, 1, cv::LINE_AA);
+                        cv::Point(10, 50), cv::FONT_HERSHEY_SIMPLEX, 1,
+                        color, 2, cv::LINE_AA);
         }
     }
 

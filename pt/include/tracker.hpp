@@ -171,11 +171,13 @@ struct Track {
 /// established with low confidence (affinity) then the strong descriptor is
 /// used to determine if there is correspondence between tracklet and detection.
 ///
+using TOnCameraEventCbk = std::function<void (const std::string&, const std::string&, std::vector<uint8_t>&)>;
+
 class PedestrianTracker {
 public:
     using Descriptor = std::shared_ptr<IImageDescriptor>;
     using Distance = std::shared_ptr<IDescriptorDistance>;
-
+    TOnCameraEventCbk iPTCbk = nullptr;
     ///
     /// \brief Constructor that creates an instance of the pedestrian tracker with
     /// parameters.

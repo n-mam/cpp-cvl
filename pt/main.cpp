@@ -100,8 +100,6 @@ bool ParseAndCheckCommandLine(int argc, char *argv[]) {
 
 /** nmam+ */
 
-using TOnCameraEventCbk = std::function<void (const std::string&, const std::string&, std::vector<uint8_t>&)>;
-
 bool iPTStop = false;
 TOnCameraEventCbk iPTCbk = nullptr;
 
@@ -182,7 +180,7 @@ int __cdecl pt_main(int argc, char * argv[]) {
         std::unique_ptr<PedestrianTracker> tracker =
             CreatePedestrianTracker(reid_model, ie, reid_mode,
                                     should_keep_tracking_info);
-
+        tracker->iPTCbk = iPTCbk;
         cv::VideoCapture cap;
         try {
             int intInput = std::stoi(FLAGS_i);
@@ -218,9 +216,11 @@ int __cdecl pt_main(int argc, char * argv[]) {
 
         for (int32_t frame_idx = std::max(0, FLAGS_first); 0 > FLAGS_last || frame_idx <= FLAGS_last; ++frame_idx) {
             cv::Mat frame;
-            if (!cap.read(frame) || iPTStop) {
-                break;
+            if (!cap.read(frame)) {
+              break;
             }
+
+            if (iPTStop) break;
 
             pedestrian_detector.submitFrame(frame, frame_idx);
             pedestrian_detector.waitAndFetchResults();
@@ -249,7 +249,7 @@ int __cdecl pt_main(int argc, char * argv[]) {
                     std::string text = std::to_string(detection.object_id) +
                         " conf: " + std::to_string(detection.confidence);
                     cv::putText(frame, text, detection.rect.tl(), cv::FONT_HERSHEY_SIMPLEX,
-                                1, cv::Scalar(0, 0, 255), 1);
+                                1, cv::Scalar(0, 0, 255), 2);
                 }
 
                 //cv::resize(frame, frame, cv::Size(), 0.5, 0.5);

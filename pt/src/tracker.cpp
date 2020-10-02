@@ -471,15 +471,37 @@ void PedestrianTracker::DropForgottenTracks() {
         max_id =
             *std::max_element(active_track_ids_.begin(), active_track_ids_.end());
 
-    const size_t kMaxTrackID = 10000;
+    const size_t kMaxTrackID = 50000;
     bool reassign_id = max_id > kMaxTrackID;
 
     size_t counter = 0;
     for (const auto &pair : tracks_) {
-        if (!IsTrackForgotten(pair.first)) {
-            new_tracks.emplace(reassign_id ? counter : pair.first, pair.second);
-            new_active_tracks.emplace(reassign_id ? counter : pair.first);
-            counter++;
+        if (IsTrackForgotten(pair.first)) 
+        {
+          std::string data = "";
+
+          if (IsTrackValid(pair.first))
+          {
+            auto track = tracks().at(pair.first);
+            auto centers = Centers(track.objects);
+            for (auto& pt : centers)
+            {
+              if (data.size())
+              {
+                data += ", ";
+              }
+              
+              data += std::to_string(pt.x) + " " + std::to_string(pt.y);
+            }
+
+            iPTCbk("trail", data, std::vector<uchar>());
+          }
+        }
+        else
+        {
+          new_tracks.emplace(reassign_id ? counter : pair.first, pair.second);
+          new_active_tracks.emplace(reassign_id ? counter : pair.first);
+          counter++;
         }
     }
     tracks_.swap(new_tracks);
@@ -801,11 +823,11 @@ cv::Mat PedestrianTracker::DrawActiveTracks(const cv::Mat &frame) {
     for (auto active_track : active_tracks) {
         size_t idx = active_track.first;
         auto centers = active_track.second;
-        DrawPolyline(centers, colors_[idx % colors_.size()], &out_frame);
+        DrawPolyline(centers, colors_[idx % colors_.size()], &out_frame, 2);
         std::stringstream ss;
         ss << idx;
         cv::putText(out_frame, ss.str(), centers.back(), cv::FONT_HERSHEY_SIMPLEX, 1,
-                    colors_[idx % colors_.size()], 1);
+                    colors_[idx % colors_.size()], 2);
         auto track = tracks().at(idx);
         if (track.lost) {
             cv::line(out_frame, active_track.second.back(),

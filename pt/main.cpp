@@ -229,6 +229,12 @@ int __cdecl pt_main(int argc, char * argv[]) {
 
             if (iStop) break;
 
+            if (frame.cols > 600)
+            {
+              auto scale = (float) 600 / frame.cols;
+              cv::resize(frame, frame, cv::Size(0, 0), scale, scale);
+            }
+
             pedestrian_detector.submitFrame(frame, frame_idx);
             pedestrian_detector.waitAndFetchResults();
 
@@ -246,17 +252,17 @@ int __cdecl pt_main(int argc, char * argv[]) {
 
                 // Drawing all detected objects on a frame by BLUE COLOR
                 for (const auto &detection : detections) {
-                    cv::rectangle(frame, detection.rect, cv::Scalar(255, 0, 0), 2);
+                    cv::rectangle(frame, detection.rect, cv::Scalar(255, 0, 0), 1);
                 }
 
                 // Drawing tracked detections only by RED color and print ID and detection
                 // confidence level.
                 for (const auto &detection : tracker->TrackedDetections()) {
-                    cv::rectangle(frame, detection.rect, cv::Scalar(0, 0, 255), 2);
+                    cv::rectangle(frame, detection.rect, cv::Scalar(0, 0, 255), 1);
                     std::string text = std::to_string(detection.object_id) +
                         " conf: " + std::to_string(detection.confidence);
                     cv::putText(frame, text, detection.rect.tl(), cv::FONT_HERSHEY_SIMPLEX,
-                                1, cv::Scalar(0, 0, 255), 2);
+                                0.5, cv::Scalar(0, 0, 255), 1);
                 }
 
                 //cv::resize(frame, frame, cv::Size(), 0.5, 0.5);

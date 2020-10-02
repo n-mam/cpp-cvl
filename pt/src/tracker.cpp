@@ -823,11 +823,11 @@ cv::Mat PedestrianTracker::DrawActiveTracks(const cv::Mat &frame) {
     for (auto active_track : active_tracks) {
         size_t idx = active_track.first;
         auto centers = active_track.second;
-        DrawPolyline(centers, colors_[idx % colors_.size()], &out_frame, 2);
-        std::stringstream ss;
-        ss << idx;
-        cv::putText(out_frame, ss.str(), centers.back(), cv::FONT_HERSHEY_SIMPLEX, 1,
-                    colors_[idx % colors_.size()], 2);
+        DrawPolyline(centers, colors_[idx % colors_.size()], &out_frame, 1.5);
+        // std::stringstream ss;
+        // ss << idx;
+        // cv::putText(out_frame, ss.str(), centers.back(), cv::FONT_HERSHEY_SIMPLEX, 0.,
+        //             colors_[idx % colors_.size()], 2);
         auto track = tracks().at(idx);
         if (track.lost) {
             cv::line(out_frame, active_track.second.back(),

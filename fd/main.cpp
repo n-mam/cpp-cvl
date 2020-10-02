@@ -265,6 +265,12 @@ int __cdecl fd_main(int argc, char *argv[]) {
             faceDetector.fetchResults();
             auto prev_detection_results = faceDetector.results;
 
+            if (frame.cols > 600)
+            {
+              auto scale = (float) 600 / frame.cols;
+              cv::resize(frame, frame, cv::Size(0, 0), scale, scale);
+            }
+            
             // No valid frame to infer if previous frame is the last
             if (!isLastFrame) {
                 faceDetector.enqueue(frame);

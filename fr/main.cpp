@@ -554,6 +554,8 @@ using TOnCameraEventCbk = std::function<void (const std::string&, const std::str
 
 bool iStop = false;
 bool iPause = false;
+bool iPlay = false;
+
 TOnCameraEventCbk iCameraCbk = nullptr;
 
 __declspec(dllexport)
@@ -566,6 +568,12 @@ __declspec(dllexport)
 void __cdecl fr_pause(bool bPause = true)
 {
   iPause = bPause;
+}
+
+__declspec(dllexport)
+void __cdecl fr_play(bool bPlay = true)
+{
+  iPlay = bPlay;
 }
 
 __declspec(dllexport)

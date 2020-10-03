@@ -13,16 +13,19 @@ using TOnCameraEventCbk = std::function<void (const std::string&, const std::str
 // face detection : age and gender
 int fd_main(int argc, char *argv[]);
 void fd_setcbk(TOnCameraEventCbk cbk);
+void fd_play(bool);
 void fd_pause(bool);
 void fd_stop(void);
 // pedestrian tracker
 int pt_main(int argc, char *argv[]);
 void pt_setcbk(TOnCameraEventCbk cbk);
+void pt_play(bool);
 void pt_pause(bool);
 void pt_stop(void);
 // face recognition
 int fr_main(int argc, char *argv[]);
 void fr_setcbk(TOnCameraEventCbk cbk);
+void fr_play(bool);
 void fr_pause(bool);
 void fr_stop(void);
 
@@ -85,16 +88,20 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
     void Play(void)
     {
       std::lock_guard<std::mutex> lg(iLock);
+
       if (iTarget == "face")
       {
+        fd_play(true);
         fd_pause(false);  
       }
       else if (iTarget == "fr") 
       {
+        fr_play(true);
         fr_pause(false); 
       }
       else if (iTarget == "person")
       {
+        pt_play(true);
         pt_pause(false);
       }
     }
@@ -102,6 +109,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
     void Pause(void)
     {
       std::lock_guard<std::mutex> lg(iLock);
+
       if (iTarget == "face")
       {
         fd_pause(true);  
@@ -119,6 +127,19 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
     void StopPlay(void)
     {
       std::lock_guard<std::mutex> lg(iLock);
+
+      if (iTarget == "face")
+      {
+        fd_play(false);
+      }
+      else if (iTarget == "fr") 
+      {
+        fr_play(false);
+      }
+      else if (iTarget == "person")
+      {
+        pt_play(false);
+      }
     }
 
     void Forward(void)

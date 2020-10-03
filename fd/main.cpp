@@ -76,6 +76,8 @@ using TOnCameraEventCbk = std::function<void (const std::string&, const std::str
 
 bool iStop = false;
 bool iPause = false;
+bool iPlay = false;
+
 TOnCameraEventCbk iCameraCbk = nullptr;
 
 __declspec(dllexport)
@@ -88,6 +90,12 @@ __declspec(dllexport)
 void __cdecl fd_pause(bool bPause = true)
 {
   iPause = bPause;
+}
+
+__declspec(dllexport)
+void __cdecl fd_play(bool bPlay = true)
+{
+  iPlay = bPlay;
 }
 
 __declspec(dllexport)
@@ -394,7 +402,7 @@ int __cdecl fd_main(int argc, char *argv[]) {
 
                 if (!FLAGS_no_show) {
                     //cv::imshow("Detection results", prev_frame);
-                    ProcessFrame(prev_frame);
+                    if (iPlay) ProcessFrame(prev_frame);
                 }
             }
 

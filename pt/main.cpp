@@ -102,6 +102,8 @@ bool ParseAndCheckCommandLine(int argc, char *argv[]) {
 
 bool iStop = false;
 bool iPause = false;
+bool iPlay = false;
+
 TOnCameraEventCbk iCameraCbk = nullptr;
 
 __declspec(dllexport)
@@ -114,6 +116,12 @@ __declspec(dllexport)
 void __cdecl pt_pause(bool bPause = true)
 {
   iPause = bPause;
+}
+
+__declspec(dllexport)
+void __cdecl pt_play(bool bPlay = true)
+{
+  iPlay = bPlay;
 }
 
 __declspec(dllexport)
@@ -267,7 +275,7 @@ int __cdecl pt_main(int argc, char * argv[]) {
 
                 //cv::resize(frame, frame, cv::Size(), 0.5, 0.5);
                 //cv::imshow("dbg", frame);
-                ProcessFrame(frame);
+                if (iPlay) ProcessFrame(frame);
                 char k = cv::waitKey(delay);
                 if (k == 27)
                     break;

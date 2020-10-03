@@ -250,7 +250,7 @@ int __cdecl fd_main(int argc, char *argv[]) {
         }
         std::cout << std::endl;
 
-        const cv::Point THROUGHPUT_METRIC_POSITION{10, 45};
+        const cv::Point THROUGHPUT_METRIC_POSITION{10, 15};
 
         cv::Size graphSize{static_cast<int>(cap.get(cv::CAP_PROP_FRAME_WIDTH) / 4), 60};
         Presenter presenter(FLAGS_u, THROUGHPUT_METRIC_POSITION.y + 15, graphSize);
@@ -270,7 +270,7 @@ int __cdecl fd_main(int argc, char *argv[]) {
               auto scale = (float) 600 / frame.cols;
               cv::resize(frame, frame, cv::Size(0, 0), scale, scale);
             }
-            
+
             // No valid frame to infer if previous frame is the last
             if (!isLastFrame) {
                 faceDetector.enqueue(frame);
@@ -386,8 +386,8 @@ int __cdecl fd_main(int argc, char *argv[]) {
                 out.str("");
                 out << std::fixed << std::setprecision(2)
                     << 1000.f / (timer["total"].getSmoothedDuration()) << " fps";
-                cv::putText(prev_frame, out.str(), THROUGHPUT_METRIC_POSITION, cv::FONT_HERSHEY_SIMPLEX, 1,
-                            cv::Scalar(255, 0, 0), 2);
+                cv::putText(prev_frame, out.str(), THROUGHPUT_METRIC_POSITION, cv::FONT_HERSHEY_SIMPLEX, 0.5,
+                            cv::Scalar(255, 0, 0), 1);
 
                 // drawing faces
                 visualizer->draw(prev_frame, faces);

@@ -194,7 +194,7 @@ void Visualizer::drawFace(cv::Mat& img, Face::Ptr f, bool drawEmotionBar) {
 
     std::ostringstream out;
     if (f->isAgeGenderEnabled()) {
-        out << (f->isMale() ? "Male" : "Female");
+        out << (f->isMale() ? "M" : "F");
         out << "," << f->getAge();
     }
 
@@ -205,10 +205,10 @@ void Visualizer::drawFace(cv::Mat& img, Face::Ptr f, bool drawEmotionBar) {
 
     cv::putText(img,
                 out.str(),
-                cv::Point2f(static_cast<float>(f->_location.x), static_cast<float>(f->_location.y - 20)),
+                cv::Point2f(static_cast<float>(f->_location.x), static_cast<float>(f->_location.y - 5)),
                 cv::FONT_HERSHEY_SIMPLEX,
-                1,
-                genderColor, 2);
+                0.4,
+                genderColor, 1);
 
     if (f->isHeadPoseEnabled()) {
         cv::Point3f center(static_cast<float>(f->_location.x + f->_location.width / 2),

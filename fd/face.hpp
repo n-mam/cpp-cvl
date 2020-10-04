@@ -65,6 +65,7 @@ private:
     bool _isEmotionsEnabled;
     bool _isHeadPoseEnabled;
     bool _isLandmarksEnabled;
+
 };
 
 // ----------------------------------- Utils -----------------------------------------------------------------

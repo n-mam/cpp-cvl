@@ -12,4 +12,16 @@ ovl_add_sample(NAME pt
                DEPENDENCIES monitors
                OPENCV_DEPENDENCIES highgui)
 
+if (WIN32)
+  
+  SET (CMAKE_CXX_FLAGS_RELEASE "/Zi /Od")
+
+  SET_TARGET_PROPERTIES(
+   pt PROPERTIES 
+   LINK_FLAGS 
+   "/DEBUG /OPT:REF /OPT:ICF"
+  )
+
+endif (WIN32)
+
 target_link_libraries(pt PRIVATE ngraph::ngraph)

@@ -143,6 +143,12 @@ int __cdecl fd_main(int argc, char *argv[]) {
             throw std::logic_error("Failed to get frame from cv::VideoCapture");
         }
 
+        if (frame.cols > 600)
+        {
+          auto scale = (float) 600 / frame.cols;
+          cv::resize(frame, frame, cv::Size(0, 0), scale, scale);
+        }
+
         const size_t width  = static_cast<size_t>(frame.cols);
         const size_t height = static_cast<size_t>(frame.rows);
 
@@ -252,6 +258,14 @@ int __cdecl fd_main(int argc, char *argv[]) {
         // Reading the next frame
         bool frameReadStatus = cap.read(frame);
 
+        if (frame.cols > 600)
+        {
+          auto scale = (float) 600 / frame.cols;
+          cv::resize(frame, frame, cv::Size(0, 0), scale, scale);
+        }
+
+        std::map<int, std::vector<std::tuple<int, char, int>>> DetectionsMap;
+
         std::cout << "To close the application, press 'CTRL+C' here";
         if (!FLAGS_no_show) {
             std::cout << " or switch to the output window and press Q or Esc";
@@ -272,12 +286,6 @@ int __cdecl fd_main(int argc, char *argv[]) {
             faceDetector.wait();
             faceDetector.fetchResults();
             auto prev_detection_results = faceDetector.results;
-
-            if (frame.cols > 600)
-            {
-              auto scale = (float) 600 / frame.cols;
-              cv::resize(frame, frame, cv::Size(0, 0), scale, scale);
-            }
 
             // No valid frame to infer if previous frame is the last
             if (!isLastFrame) {
@@ -314,6 +322,11 @@ int __cdecl fd_main(int argc, char *argv[]) {
                     }
                     frameReadStatus = cap.read(next_frame);
                 }
+                if (next_frame.cols > 600)
+                {
+                  auto scale = (float) 600 / next_frame.cols;
+                  cv::resize(next_frame, next_frame, cv::Size(0, 0), scale, scale);
+                }
             }
 
             if (isFaceAnalyticsEnabled) {
@@ -349,7 +362,7 @@ int __cdecl fd_main(int argc, char *argv[]) {
                     } else {
                         prev_faces.remove(face);
                         face->incrDetCount();
-                        std::cout << "prev face match id: " << face->getId() << ", detection count : " << face->getDetCount() << "\n";
+                        std::cout << "prev face match id: " << face->getId() << ", detection count : " << face->getDetCount() << ", age : " << face->getAge() << "\n";
                     }
 
                     face->_intensity_mean = intensity_mean;
@@ -385,6 +398,46 @@ int __cdecl fd_main(int argc, char *argv[]) {
                 }
 
                 faces.push_back(face);
+            }
+
+            for (auto& f : faces)
+            {
+              auto& d = DetectionsMap[f->getId()];
+              d.push_back(
+                std::make_tuple(f->getAge(), f->isMale() ? 'M' : 'F', framesCounter)
+              );
+            }
+
+            if (framesCounter % 15 == 0) // check after every 15th frame
+            {
+              // for every id which is ever detected
+              for (auto& it = DetectionsMap.begin(); it != DetectionsMap.end(); )
+              {
+                bool deleted = false;
+                auto d = *it;
+                // if the size of total detections is > 50
+                if (d.second.size() > 70)
+                {
+                  if ((framesCounter - std::get<2>(d.second.back())) > 50) // if the last detection happened more than 50 frames ago
+                  {
+                    std::string data;
+
+                    for (auto& t : d.second)
+                    {
+                      if (data.size())
+                      {
+                        data += ", ";
+                      }
+                      data += std::to_string(std::get<0>(t)) + " " + std::to_string(std::get<1>(t));
+                    }
+
+                    std::cout << d.first << " frozen : " << data << "\n";
+                    iCameraCbk("trail", data, std::vector<uchar>());
+                    it = DetectionsMap.erase(it);
+                  }
+                }
+                if (!deleted) it++;
+              }
             }
 
             presenter.drawGraphs(prev_frame);

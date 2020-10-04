@@ -203,6 +203,8 @@ void Visualizer::drawFace(cv::Mat& img, Face::Ptr f, bool drawEmotionBar) {
         out << "," << emotion.first;
     }
 
+    out << ", id : " << f->getId();
+    
     cv::putText(img,
                 out.str(),
                 cv::Point2f(static_cast<float>(f->_location.x), static_cast<float>(f->_location.y - 5)),

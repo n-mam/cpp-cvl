@@ -150,7 +150,7 @@ class CTracker
           data += std::to_string(p.x) + " " + std::to_string(p.y);
         }
 
-        iOnCameraEventCbk("trail", data);
+        iOnCameraEventCbk("trail", data, std::vector<uint8_t>());
       }
 
       if (iPurgedContexts.size() > 20)

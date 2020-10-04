@@ -1,16 +1,18 @@
 project (cpp-cvl)
 
 # set(CMAKE_VERBOSE_MAKEFILE ON)
+# SET OPENCV_DIR=C:/opencv/build/install
+# SET OPENSSL_ROOT_DIR=C:/vcpkg/installed/x64-windows
 
 find_package(Threads REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(OpenSSL REQUIRED)
-find_package(ngraph REQUIRED)
 
-# SET OPENCV_DIR=C:/opencv/build/install
-# SET OPENSSL_ROOT_DIR=C:/vcpkg/installed/x64-windows
+ADD_EXECUTABLE(TestCVL Test.cpp)
 
-macro(ovl_add_sample)
+if(OPENVINO)
+ find_package(ngraph)
+ macro(ovl_add_sample)
     set(options EXCLUDE_CPPLINT)
     set(oneValueArgs NAME)
     set(multiValueArgs SOURCES HEADERS DEPENDENCIES OPENCV_DEPENDENCIES INCLUDE_DIRECTORIES)
@@ -63,28 +65,23 @@ macro(ovl_add_sample)
     if(COMMAND add_cpplint_target AND NOT IE_SAMPLE_EXCLUDE_CPPLINT)
         add_cpplint_target(${IE_SAMPLE_NAME}_cpplint FOR_TARGETS ${IE_SAMPLE_NAME})
     endif()
-endmacro()
+ endmacro()
 
-add_subdirectory(fd)
-add_subdirectory(pt)
-add_subdirectory(fr)
-
-ADD_EXECUTABLE(TestCVL Test.cpp)
-
-target_compile_definitions(TestCVL PUBLIC OPENVINO)
+ add_subdirectory(fd)
+ add_subdirectory(pt)
+ add_subdirectory(fr)
+ target_compile_definitions(TestCVL PUBLIC OPENVINO)
+endif (OPENVINO)
 
 SET_PROPERTY(TARGET TestCVL PROPERTY CXX_STANDARD 17)
 
 if (WIN32)
-  
   SET (CMAKE_CXX_FLAGS_RELEASE "/Zi /Od")
-
   SET_TARGET_PROPERTIES(
    TestCVL PROPERTIES 
    LINK_FLAGS 
    "/DEBUG /OPT:REF /OPT:ICF"
   )
-
 endif (WIN32)
 
 TARGET_INCLUDE_DIRECTORIES(
@@ -101,7 +98,13 @@ TARGET_LINK_LIBRARIES(
   ${OpenCV_LIBS} 
   ${CMAKE_THREAD_LIBS_INIT} 
   OpenSSL::SSL
+)
+
+if(OPENVINO)
+ TARGET_LINK_LIBRARIES(
+  TestCVL
   fd
   pt
   fr
-)
+ )
+endif (OPENVINO)

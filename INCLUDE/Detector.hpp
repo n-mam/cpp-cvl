@@ -48,9 +48,9 @@ class CDetector : public NPL::CSubject<uint8_t, uint8_t>
 	    }
 	    // else
 	    // {
-		  //   iNetwork.setPreferableBackend(cv::dnn::Backend::DNN_BACKEND_OPENCV);
+		  //   iNetwork.setPreferableBackend(cv::dnn::Backend::DNN_BACKEND_INFERENCE_ENGINE);
 		  //   iNetwork.setPreferableTarget(cv::dnn::Target::DNN_TARGET_OPENCL);
-		  //   std::cout << "OpenCL_FP16 backend and target enabled for inference." << std::endl;
+		  //   std::cout << "IE backend and cpu target enabled for inference." << std::endl;
 	    // }
     }
 
@@ -88,11 +88,15 @@ class AgeDetector : public CDetector
       iNetwork.setInput(blob);
       std::vector<float> agePreds = iNetwork.forward();
       auto max_indice_age = std::distance(agePreds.begin(), max_element(agePreds.begin(), agePreds.end()));
-      std::string age = ageList[max_indice_age];
-      std::cout << "age : " << age << "\n";
+      iAge.push_back(ageList[max_indice_age]);
+      std::cout << "age : " << iAge.back() << "\n";
       return {};
     }
-  
+
+  public:
+
+    std::vector<std::string> iAge;
+
   protected:
 
     std::vector<std::string> ageList = {"(0-2)", "(4-6)", "(8-12)", "(15-20)", "(25-32)", "(38-43)", "(48-53)", "(60-100)"};
@@ -115,15 +119,22 @@ class GenderDetector : public CDetector
       iNetwork.setInput(blob);
       std::vector<float> genderPreds = iNetwork.forward();
       auto max_index_gender = std::distance(genderPreds.begin(), max_element(genderPreds.begin(), genderPreds.end()));
-      std::string gender = genderList[max_index_gender];
-      std::cout << "gender : " << gender << "\n";
+      iGender.push_back(genderList[max_index_gender]);
+      std::cout << "gender : " << iGender.back() << "\n";
       return {};
     }
+
+  public:
+
+    std::vector<std::string> iGender;
 
   protected:
 
     std::vector<std::string> genderList = {"Male", "Female"};
 };
+
+using SPAgeDetector = std::shared_ptr<AgeDetector>;
+using SPGenderDetector = std::shared_ptr<GenderDetector>;
 
 class FaceDetector : public CDetector
 {
@@ -183,6 +194,10 @@ class FaceDetector : public CDetector
             {
               iGenderDetector->Detect(roi);
             }
+
+            cv::putText(frame, (iGenderDetector->iGender).back() + (iAgeDetector->iAge).back(),
+               cv::Point((int)rect.x, (int)(rect.y - 5)), cv::FONT_HERSHEY_SIMPLEX, 
+               0.5, cv::Scalar(0, 0, 255), 1);
           }
         }
       }
@@ -192,8 +207,8 @@ class FaceDetector : public CDetector
 
   protected:
 
-    SPCDetector iAgeDetector = nullptr;
-    SPCDetector iGenderDetector = nullptr;
+    SPAgeDetector iAgeDetector = nullptr;
+    SPGenderDetector iGenderDetector = nullptr;
 };
 
 class ObjectDetector : public CDetector
@@ -335,6 +350,9 @@ class BackgroundSubtractor : public CDetector
 
         if (!skip)
         {
+          cv::putText(frame, std::to_string((int)(bb.width * bb.height)),
+             cv::Point((int)bb.x, (int)(bb.y - 5)), cv::FONT_HERSHEY_SIMPLEX, 
+             0.5, cv::Scalar(0, 0, 255), 1);
           detections.push_back(bb);
         }
       }

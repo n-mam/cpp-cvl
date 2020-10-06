@@ -10,7 +10,6 @@ using TOnCameraEventCbk = std::function<void (const std::string&, const std::str
 #include <Source.hpp>
 #include <Tracker.hpp>
 #include <Detector.hpp>
-#include <Counter.hpp>
 #include <Geometry.hpp>
 
 #include <CSubject.hpp>
@@ -35,8 +34,6 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
         iSource = std::make_shared<CSource>(source);
       }
 
-      iTracker = std::make_shared<OpenCVTracker>(tracker);
-
       if (target == "person" || target == "car")
       {
         iDetector = std::make_shared<ObjectDetector>(target);
@@ -50,7 +47,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
         iDetector = std::make_shared<BackgroundSubtractor>(algo);
       }
 
-      iCounter = std::make_shared<CCounter>();
+      iTracker = std::make_shared<OpenCVTracker>(tracker);
     }
 
     ~CCamera()
@@ -177,7 +174,6 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
           if (iSource->HasEnded())
           {
             iSource->Rewind();
-            iCounter.reset(new CCounter());
             iTracker->ClearAllContexts();        
             continue;
           }
@@ -204,18 +200,10 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
         { /*
            * update all active trackers first
            */
-          iTracker->UpdateTrackingContexts(
-            frame,
-            [this, &frame](auto& tc)
-            {
-              if (GetName() == "CV")
-              {
-                return iCounter->ProcessTrail(tc.iTrail, frame);
-              }
-              return false;
-            }
-          );
-
+          auto updates = iTracker->UpdateTrackingContexts(frame);
+          /*
+           * run detector
+           */
           auto detections = iDetector->Detect(frame);
           /*
            * exclude detections which overlap with any tracker's context
@@ -239,13 +227,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
           }
         }
 
-        iTracker->RenderTrackingContextsPath(frame);
-        iTracker->RenderTrackingContextsDisplacement(frame);
-
-        if (GetName() == "CV")
-        {
-          iCounter->DisplayRefLineAndCounts(frame);
-        }
+        iTracker->RenderDisplacementAndPaths(frame);
 
         {
           std::lock_guard<std::mutex> lg(iLock);
@@ -265,7 +247,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
           }
         }
 
-        if (!iSource->HandleUserInput(iCounter)) break;
+        if (!iSource->HandleUserInput(iTracker)) break;
 
         while (iPaused && !iStop)
         {
@@ -292,8 +274,6 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
     SPCSource   iSource;
 
     SPCTracker  iTracker;
-
-    SPCCounter  iCounter;
 
     SPCDetector iDetector;
 

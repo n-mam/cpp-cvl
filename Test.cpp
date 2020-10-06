@@ -25,6 +25,7 @@ int main(int argc, char *argv[])
    putenv("cpp-cvl-test=true");
 
    auto camera = CVL::make_camera(source, "person", "gmg", "CSRT");
+   //auto camera = CVL::make_camera(source, "face", "gmg", "CSRT");
 
    camera->SetName("CV");
 

@@ -1,7 +1,7 @@
 #ifndef SOURCE_HPP
 #define SOURCE_HPP 
 
-#include <Counter.hpp>
+#include <Tracker.hpp>
 
 #include <opencv2/videoio.hpp>
 #include <opencv2/highgui.hpp>
@@ -91,7 +91,7 @@ class CSource
       return (GetTotalFrames() == GetCurrentOffset());
     }
 
-    bool HandleUserInput(SPCCounter spcounter)
+    bool HandleUserInput(SPCTracker tracker)
     {
       bool fRet = true;
 
@@ -113,13 +113,13 @@ class CSource
         }
         else if (c == 'a' || c == 'd')
         {
-          if (c == 'a') spcounter->SetRefLine(0, -10);
-          if (c == 'd') spcounter->SetRefLine(0, 10);
+          if (c == 'a') tracker->SetRefLine(0, -10);
+          if (c == 'd') tracker->SetRefLine(0, 10);
         }
         else if (c == 'w' || c == 's')
         {
-          if (c == 'w') spcounter->SetRefLine(1, -10);
-          if (c == 's') spcounter->SetRefLine(1, 10); 
+          if (c == 'w') tracker->SetRefLine(1, -10);
+          if (c == 's') tracker->SetRefLine(1, 10); 
         }
         else if (c == 'q' || c == 'Q')
         {

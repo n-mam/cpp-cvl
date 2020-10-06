@@ -7,6 +7,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/tracking/tracking.hpp>
 
+#include <Counter.hpp>
 #include <Geometry.hpp>
 
 struct TrackingContext
@@ -44,11 +45,23 @@ class CTracker
     CTracker(const std::string& tracker)
     {
       iType = tracker;
+      iCounter = std::make_shared<CCounter>();
     }
 
     ~CTracker()
     {
+      ClearAllContexts();
+    }
+
+    void ClearAllContexts(void)
+    {
       iTrackingContexts.clear();
+      iCounter.reset(new CCounter());
+    }
+
+    void SetRefLine(int orientation, int delta)
+    {
+      iCounter->SetRefLine(orientation, delta);
     }
 
     size_t GetContextCount(void)
@@ -56,31 +69,18 @@ class CTracker
       return iTrackingContexts.size();
     }
 
-    void ClearAllContexts(void)
-    {
-      iTrackingContexts.clear();
-    }
-
-    void RenderTrackingContextsDisplacement(cv::Mat& m)
+    void RenderDisplacementAndPaths(cv::Mat& m)
     {
       for (auto& tc : iTrackingContexts)
-      {
+      { /*
+         * Displacement
+         */
         auto first = GetRectCenter(tc.iTrail.front());
         auto last = GetRectCenter(tc.iTrail.back());
         cv::line(m, first, last, cv::Scalar(0, 0, 255), 1);
-      }
-      for (auto& pc : iPurgedContexts)
-      {
-        auto first = GetRectCenter(pc.iTrail.front());
-        auto last = GetRectCenter(pc.iTrail.back());
-        cv::line(m, first, last, cv::Scalar(0, 255, 255), 1);
-      }
-    }
-
-    void RenderTrackingContextsPath(cv::Mat& m)
-    {
-      for (auto& tc : iTrackingContexts)
-      {
+        /*
+         * Path
+         */
         for (size_t i = 1; i < tc.iTrail.size() - 1; i++)
         {
           auto f = GetRectCenter(tc.iTrail[i]);
@@ -89,12 +89,17 @@ class CTracker
         }
 
         auto& bb = tc.iTrail.back();
-        
         cv::rectangle(m, bb, cv::Scalar(0, 0, 255), 1, 1); //tracking red
-        cv::putText(m, std::to_string((int)(bb.width * bb.height)),
-            cv::Point((int)bb.x, (int)(bb.y - 5)), cv::FONT_HERSHEY_SIMPLEX, 
-            0.4, cv::Scalar(0, 0, 255), 1);
       }
+
+      for (auto& pc : iPurgedContexts)
+      {
+        auto first = GetRectCenter(pc.iTrail.front());
+        auto last = GetRectCenter(pc.iTrail.back());
+        cv::line(m, first, last, cv::Scalar(0, 255, 255), 1);
+      }
+
+      iCounter->DisplayRefLineAndCounts(m);
     }
 
     bool DoesROIOverlapAnyContext(cv::Rect2d roi, cv::Mat& m)
@@ -104,9 +109,6 @@ class CTracker
         if (DoesRectOverlapRect(roi, tc.iTrail.back()))
         {
           cv::rectangle(m, roi, cv::Scalar(255, 0, 0 ), 1, 1);  // detection blue
-          cv::putText(m, std::to_string((int)(roi.width * roi.height)),
-            cv::Point((int)roi.x, (int)(roi.y - 5)), cv::FONT_HERSHEY_SIMPLEX, 
-            0.4, cv::Scalar(255, 0, 0), 1);
           return true;
         }
       }
@@ -120,11 +122,13 @@ class CTracker
 
     virtual void AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& r) {}
 
-    virtual void UpdateTrackingContexts(const cv::Mat& frame, TCbkTracker cbk = nullptr) {}
+    virtual std::vector<cv::Rect2d> UpdateTrackingContexts(cv::Mat& frame, TCbkTracker cbk = nullptr) { return {}; }
 
   protected:
   
     std::string iType;
+
+    SPCCounter iCounter;
 
     TOnCameraEventCbk iOnCameraEventCbk = nullptr;
 
@@ -187,9 +191,14 @@ class OpenCVTracker : public CTracker
       iTrackingContexts.push_back(tc);
     }
 
-    void UpdateTrackingContexts(const cv::Mat& m, TCbkTracker cbk = nullptr) override
+    std::vector<cv::Rect2d> UpdateTrackingContexts(cv::Mat& m, TCbkTracker cbk = nullptr) override
     {
-      if (!iTrackingContexts.size()) return;
+      if (!iTrackingContexts.size())
+      {
+        return {};
+      } 
+
+      std::vector<cv::Rect2d> out;
 
       for (size_t i = iTrackingContexts.size(); i > 0; i--)
       {
@@ -198,7 +207,7 @@ class OpenCVTracker : public CTracker
         if (tc.IsFrozen())
         {
           PurgeAndSaveTrackingContext(tc);
-          iTrackingContexts.erase(iTrackingContexts.begin() + (i - 1));          
+          iTrackingContexts.erase(iTrackingContexts.begin() + (i - 1));
           //std::cout << "removed frozen tc\n";
           continue;
         }
@@ -213,9 +222,11 @@ class OpenCVTracker : public CTracker
           {
             tc.iTrail.push_back(bb);
 
-            if (cbk && !tc.iSkip)
+            out.push_back(bb);
+
+            if (!tc.iSkip)
             {
-              tc.iSkip = cbk(tc);
+              tc.iSkip = iCounter->ProcessTrail(tc.iTrail, m);
             }
           }
           else
@@ -232,6 +243,8 @@ class OpenCVTracker : public CTracker
           //std::cout << "Tracker at " << (i - 1) << " lost, size : " << iTrackingContexts.size() << "\n";
         }
       }
+
+      return out;
     }
 
   protected:

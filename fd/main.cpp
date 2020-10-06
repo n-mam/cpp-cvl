@@ -418,7 +418,7 @@ int __cdecl fd_main(int argc, char *argv[]) {
                 // if the size of total detections is > 50
                 if (d.second.size() > 70)
                 {
-                  if ((framesCounter - std::get<2>(d.second.back())) > 50) // if the last detection happened more than 50 frames ago
+                  if ((framesCounter - std::get<2>(d.second.back())) > 100) // if the last detection happened more than 50 frames ago
                   {
                     std::string data;
 

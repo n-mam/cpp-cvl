@@ -1,6 +1,7 @@
 #ifndef DETECTOR_HPP
 #define DETECTOR_HPP 
 
+#include <tuple>
 #include <string>
 
 #include <opencv2/opencv.hpp>
@@ -9,6 +10,8 @@
 #include <opencv2/bgsegm.hpp>
 
 #include <CSubject.hpp>
+
+using Detections = std::vector<std::tuple<cv::Rect2d, std::string, std::string>>;
 
 class CDetector : public NPL::CSubject<uint8_t, uint8_t>
 {
@@ -56,7 +59,7 @@ class CDetector : public NPL::CSubject<uint8_t, uint8_t>
 
     virtual ~CDetector() {}
  
-    virtual std::vector<cv::Rect2d> Detect(cv::Mat& frame) = 0;
+    virtual Detections Detect(cv::Mat& frame) = 0;
 
   protected:
 
@@ -79,23 +82,20 @@ class AgeDetector : public CDetector
     {
     }
 
-    virtual std::vector<cv::Rect2d> Detect(cv::Mat& frame) override
+    virtual Detections Detect(cv::Mat& frame) override
     {
       auto blob = cv::dnn::blobFromImage(
-        frame, 1, cv::Size(227, 227), 
-        cv::Scalar(78.4263377603, 87.7689143744, 114.895847746), 
-        false);
+         frame, 1, cv::Size(227, 227), 
+         cv::Scalar(78.4263377603, 87.7689143744, 114.895847746), 
+         false);
       iNetwork.setInput(blob);
       std::vector<float> agePreds = iNetwork.forward();
       auto max_indice_age = std::distance(agePreds.begin(), max_element(agePreds.begin(), agePreds.end()));
-      iAge.push_back(ageList[max_indice_age]);
-      std::cout << "age : " << iAge.back() << "\n";
-      return {};
+      //std::cout << "age : " << ageList[max_indice_age] << "\n";
+      return {{cv::Rect2d(), ageList[max_indice_age], std::string()}};
     }
 
   public:
-
-    std::vector<std::string> iAge;
 
   protected:
 
@@ -110,23 +110,20 @@ class GenderDetector : public CDetector
     {
     }
 
-    virtual std::vector<cv::Rect2d> Detect(cv::Mat& frame) override
+    virtual Detections Detect(cv::Mat& frame) override
     {
       auto blob = cv::dnn::blobFromImage(
-        frame, 1, cv::Size(227, 227), 
-        cv::Scalar(78.4263377603, 87.7689143744, 114.895847746), 
-        false);
+         frame, 1, cv::Size(227, 227), 
+         cv::Scalar(78.4263377603, 87.7689143744, 114.895847746), 
+         false);
       iNetwork.setInput(blob);
       std::vector<float> genderPreds = iNetwork.forward();
       auto max_index_gender = std::distance(genderPreds.begin(), max_element(genderPreds.begin(), genderPreds.end()));
-      iGender.push_back(genderList[max_index_gender]);
-      std::cout << "gender : " << iGender.back() << "\n";
-      return {};
+      //std::cout << "gender : " << iGender.back() << "\n";
+      return {{cv::Rect2d(), std::string(), genderList[max_index_gender]}};
     }
 
   public:
-
-    std::vector<std::string> iGender;
 
   protected:
 
@@ -146,9 +143,9 @@ class FaceDetector : public CDetector
       iGenderDetector = std::make_shared<GenderDetector>();
     }
 
-    virtual std::vector<cv::Rect2d> Detect(cv::Mat& frame) override
+    virtual Detections Detect(cv::Mat& frame) override
     {
-      std::vector<cv::Rect2d> out;
+      Detections out;
 
       cv::Mat inputBlob = cv::dnn::blobFromImage(
         frame,
@@ -175,27 +172,29 @@ class FaceDetector : public CDetector
           int x2 = static_cast<int>(detectionMat.at<float>(i, 5) * frame.cols);
           int y2 = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
 
-          out.emplace_back(cv::Point(x1, y1), cv::Point(x2, y2));
-
-          std::cout << "Face detected at " << x1 << "," << y1 << "[" << x2 - x1 << "," << y2 - y1 << "]\n";
-
           auto rect = cv::Rect2d(x1, y1, x2-x1, y2-y1);
 
           if (IsRectInsideMat(rect, frame))
           {
+            //std::cout << "Face detected at " << x1 << "," << y1 << "[" << x2 - x1 << "," << y2 - y1 << "]\n";
+
             cv::Mat roi = cv::Mat(frame, rect);
+
+            Detections age, gender;
 
             if (iAgeDetector)
             {
-              iAgeDetector->Detect(roi);
+              age = iAgeDetector->Detect(roi);
             }
 
             if (iGenderDetector)
             {
-              iGenderDetector->Detect(roi);
+              gender = iGenderDetector->Detect(roi);
             }
 
-            cv::putText(frame, (iGenderDetector->iGender).back() + (iAgeDetector->iAge).back(),
+            out.emplace_back(rect, std::get<1>(age[0]), std::get<2>(gender[0]));
+
+            cv::putText(frame, std::get<2>(gender[0]) + std::get<1>(age[0]),
                cv::Point((int)rect.x, (int)(rect.y - 5)), cv::FONT_HERSHEY_SIMPLEX, 
                0.5, cv::Scalar(0, 0, 255), 1);
           }
@@ -222,9 +221,9 @@ class ObjectDetector : public CDetector
       iTarget = target;
     }
 
-    virtual std::vector<cv::Rect2d> Detect(cv::Mat& frame) override
+    virtual Detections Detect(cv::Mat& frame) override
     {
-      std::vector<cv::Rect2d> out;
+      Detections out;
 
       cv::Mat resized;
 
@@ -260,9 +259,9 @@ class ObjectDetector : public CDetector
             y1 = static_cast<int>(detectionMat.at<float>(i, 4) * frame.rows);
             x2 = static_cast<int>(detectionMat.at<float>(i, 5) * frame.cols);
             y2 = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
-            out.emplace_back(cv::Point(x1, y1), cv::Point(x2, y2));
+            out.emplace_back(cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2)), std::string(), std::string());
             //std::cout << "Object(" + iObjectClass[idx] + ") detected at " << x1 << "," << y1 << "[" << x2 - x1 << "," << y2 - y1 << "]\n";
-          }      
+          }
         }
       }
 
@@ -304,7 +303,7 @@ class BackgroundSubtractor : public CDetector
       }
     }
 
-    virtual std::vector<cv::Rect2d> Detect(cv::Mat& frame) override
+    virtual Detections Detect(cv::Mat& frame) override
     {
       cv::Mat fgMask;
 
@@ -312,7 +311,7 @@ class BackgroundSubtractor : public CDetector
         std::vector<cv::Point>
       > contours;
 
-      std::vector<cv::Rect2d> detections;
+      Detections out;
 
       pBackgroundSubtractor->apply(frame, fgMask, 0.8);
 
@@ -354,11 +353,11 @@ class BackgroundSubtractor : public CDetector
           cv::putText(frame, std::to_string((int)(bb.width * bb.height)),
              cv::Point((int)bb.x, (int)(bb.y - 5)), cv::FONT_HERSHEY_SIMPLEX, 
              0.5, cv::Scalar(0, 0, 255), 1);
-          detections.push_back(bb);
+          out.emplace_back(bb, std::string(), std::string());
         }
       }
 
-      return detections;
+      return out;
     }
 
     virtual void SetProperty(const std::string& key, const std::string& value) override

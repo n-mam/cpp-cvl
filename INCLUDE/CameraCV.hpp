@@ -205,36 +205,37 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
         { /*
            * update all active trackers first
            */
-          //auto updates = iTracker->UpdateTrackingContexts(frame);
+          auto updates = iTracker->UpdateTrackingContexts(frame);
           /*
            * run detector
            */
-          //auto detections = iDetector->Detect(frame);
+          auto detections = iDetector->Detect(frame);
 
-          auto& f1 = std::async(std::launch::async, &CTracker::UpdateTrackingContexts, iTracker.get(), frame);
-          auto& f2 = std::async(std::launch::async, &CDetector::Detect, iDetector.get(), frame);
+          // auto& f1 = std::async(std::launch::async, &CTracker::UpdateTrackingContexts, iTracker.get(), frame);
+          // auto& f2 = std::async(std::launch::async, &CDetector::Detect, iDetector.get(), frame);
+          // auto updates = f1.get(); 
+          // auto detections = f2.get();
 
-          auto updates = f1.get(); 
-          auto detections = f2.get();
           /*
            * exclude detections which overlap with any tracker's context
            */
-          if (detections.size())
+          for (auto&& it = detections.begin(); it != detections.end(); )
           {
-            for (size_t i = detections.size(); i > 0; i--)
+            auto tc = iTracker->MatchDetectionWithTrackingContext(std::get<0>(*it), frame);
+
+            if (tc)
             {
-              if (iTracker->DoesROIOverlapAnyContext(detections[i - 1], frame))
-              {
-                detections.erase(detections.begin() + (i - 1));
-              }
+              (tc->iAge).push_back(std::get<1>(*it));
+              (tc->iGender).push_back(std::get<2>(*it));
+              it = detections.erase(it);
             }
-          }
-          /*
-           * start tracking all new detections
-           */
-          for (auto& roi : detections)
-          {
-            iTracker->AddNewTrackingContext(frame, roi);
+            else
+            { /*
+               * start tracking all new detections
+               */
+              iTracker->AddNewTrackingContext(frame, std::get<0>(*it));
+              it++;
+            }
           }
         }
 

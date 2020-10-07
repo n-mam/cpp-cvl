@@ -16,6 +16,10 @@ struct TrackingContext
 
   std::vector<cv::Rect2d> iTrail;  // track bb trail
 
+  std::vector<std::string> iAge;
+
+  std::vector<std::string> iGender;
+
   bool iSkip = false;
 
   bool IsFrozen(void)
@@ -102,28 +106,28 @@ class CTracker
       iCounter->DisplayRefLineAndCounts(m);
     }
 
-    bool DoesROIOverlapAnyContext(cv::Rect2d roi, cv::Mat& m)
+    TrackingContext * MatchDetectionWithTrackingContext(cv::Rect2d roi, cv::Mat& m)
     {
       for (auto& tc : iTrackingContexts)
       {
         if (DoesRectOverlapRect(roi, tc.iTrail.back()))
         {
           cv::rectangle(m, roi, cv::Scalar(255, 0, 0 ), 1, 1);  // detection blue
-          return true;
+          return &tc;
         }
       }
-      return false;
-    }
-
-    virtual void SetEventCallback(TOnCameraEventCbk cbk)
-    {
-      iOnCameraEventCbk = cbk;
+      return nullptr;
     }
 
     virtual void AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& r) {}
 
     virtual std::vector<cv::Rect2d> UpdateTrackingContexts(cv::Mat& frame) { return {}; }
 
+    virtual void SetEventCallback(TOnCameraEventCbk cbk)
+    {
+      iOnCameraEventCbk = cbk;
+    }
+    
   protected:
   
     std::string iType;
@@ -140,7 +144,7 @@ class CTracker
     {
       if (iOnCameraEventCbk)
       {
-        std::string data = "";
+        std::string data;
 
         for (auto& r : tc.iTrail)
         {

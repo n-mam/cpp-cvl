@@ -122,7 +122,7 @@ class CTracker
 
     virtual void AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& r) {}
 
-    virtual std::vector<cv::Rect2d> UpdateTrackingContexts(cv::Mat& frame, TCbkTracker cbk = nullptr) { return {}; }
+    virtual std::vector<cv::Rect2d> UpdateTrackingContexts(cv::Mat& frame) { return {}; }
 
   protected:
   
@@ -191,7 +191,7 @@ class OpenCVTracker : public CTracker
       iTrackingContexts.push_back(tc);
     }
 
-    std::vector<cv::Rect2d> UpdateTrackingContexts(cv::Mat& m, TCbkTracker cbk = nullptr) override
+    std::vector<cv::Rect2d> UpdateTrackingContexts(cv::Mat& m) override
     {
       if (!iTrackingContexts.size())
       {

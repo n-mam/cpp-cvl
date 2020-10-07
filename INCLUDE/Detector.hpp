@@ -46,12 +46,12 @@ class CDetector : public NPL::CSubject<uint8_t, uint8_t>
 		    iNetwork.setPreferableTarget(cv::dnn::Target::DNN_TARGET_CUDA);
 		    std::cout << "CUDA backend and target enabled for inference." << std::endl;
 	    }
-	    // else
-	    // {
-		  //   iNetwork.setPreferableBackend(cv::dnn::Backend::DNN_BACKEND_INFERENCE_ENGINE);
-		  //   iNetwork.setPreferableTarget(cv::dnn::Target::DNN_TARGET_OPENCL);
-		  //   std::cout << "IE backend and cpu target enabled for inference." << std::endl;
-	    // }
+	    else
+	    {
+		    iNetwork.setPreferableBackend(cv::dnn::Backend::DNN_BACKEND_INFERENCE_ENGINE);
+		    iNetwork.setPreferableTarget(cv::dnn::Target::DNN_TARGET_OPENCL_FP16);
+		    std::cout << "IE backend and cpu target enabled for inference." << std::endl;
+	    }
     }
 
     virtual ~CDetector() {}
@@ -168,7 +168,7 @@ class FaceDetector : public CDetector
       {
         float confidence = detectionMat.at<float>(i, 2);
 
-        if (confidence > 0.7)
+        if (confidence > 0.6)
         {
           int x1 = static_cast<int>(detectionMat.at<float>(i, 3) * frame.cols);
           int y1 = static_cast<int>(detectionMat.at<float>(i, 4) * frame.rows);
@@ -216,6 +216,7 @@ class ObjectDetector : public CDetector
   public:
 
     ObjectDetector(const std::string& target) :
+     //CDetector("person-detection-retail-0013/FP16/person-detection-retail-0013.bin", "person-detection-retail-0013/FP16/person-detection-retail-0013.xml") 
      CDetector("MobileNetSSD_deploy.prototxt", "MobileNetSSD_deploy.caffemodel") 
     {
       iTarget = target;
@@ -247,7 +248,7 @@ class ObjectDetector : public CDetector
       {
         float confidence = detectionMat.at<float>(i, 2);
 
-        if (confidence > 0.7)
+        if (confidence > 0.6)
         {
           int idx, x1, y1, x2, y2;
 
@@ -260,7 +261,7 @@ class ObjectDetector : public CDetector
             x2 = static_cast<int>(detectionMat.at<float>(i, 5) * frame.cols);
             y2 = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
             out.emplace_back(cv::Point(x1, y1), cv::Point(x2, y2));
-            std::cout << "Object(" + iObjectClass[idx] + ") detected at " << x1 << "," << y1 << "[" << x2 - x1 << "," << y2 - y1 << "]\n";
+            //std::cout << "Object(" + iObjectClass[idx] + ") detected at " << x1 << "," << y1 << "[" << x2 - x1 << "," << y2 - y1 << "]\n";
           }      
         }
       }

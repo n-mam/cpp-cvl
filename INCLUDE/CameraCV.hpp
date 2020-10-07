@@ -1,8 +1,10 @@
 #ifndef CAMERACV_HPP
 #define CAMERACV_HPP
+#include <windows.h>
 
 #include <thread>
 #include <chrono>
+#include <future>
 #include <functional>
 
 using TOnCameraEventCbk = std::function<void (const std::string&, const std::string&, std::vector<uint8_t>&)>;
@@ -167,6 +169,8 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
     {
       cv::Mat frame;
 
+      DWORD startTime = GetTickCount();
+
       while (!iStop)
       {
         if (!iSource->Read(frame))
@@ -174,7 +178,8 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
           if (iSource->HasEnded())
           {
             iSource->Rewind();
-            iTracker->ClearAllContexts();        
+            iTracker->ClearAllContexts();
+            startTime = GetTickCount();
             continue;
           }
           else
@@ -200,11 +205,17 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
         { /*
            * update all active trackers first
            */
-          auto updates = iTracker->UpdateTrackingContexts(frame);
+          //auto updates = iTracker->UpdateTrackingContexts(frame);
           /*
            * run detector
            */
-          auto detections = iDetector->Detect(frame);
+          //auto detections = iDetector->Detect(frame);
+
+          auto& f1 = std::async(std::launch::async, &CTracker::UpdateTrackingContexts, iTracker.get(), frame);
+          auto& f2 = std::async(std::launch::async, &CDetector::Detect, iDetector.get(), frame);
+
+          auto updates = f1.get(); 
+          auto detections = f2.get();
           /*
            * exclude detections which overlap with any tracker's context
            */
@@ -242,6 +253,9 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
           {
             if (GetName() == "CV")
             {
+              auto fps = (float) iSource->GetCurrentOffset() / (float)((GetTickCount() - startTime) / 1000);
+              cv::putText(frame, "fps : " + std::to_string(fps), cv::Point(5, 10), 
+                     cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 0, 0), 1);
               cv::imshow(this->GetName().c_str(), frame);
             }
           }

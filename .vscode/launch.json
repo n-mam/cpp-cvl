@@ -5,10 +5,21 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Test CVL",
+            "name": "Test CVL openvino",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/intel64/Release/Test.exe",
+            "program": "${workspaceFolder}/build/intel64/Release/TestCVL.exe",
+            "args": ["f:\\tv2.mp4"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": true
+        },
+        {
+            "name": "Test CVL opencv",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Release/TestCVL.exe",
             "args": ["f:\\tv2.mp4"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",

@@ -274,7 +274,7 @@ int __cdecl pt_main(int argc, char * argv[]) {
                 }
 
                 //cv::resize(frame, frame, cv::Size(), 0.5, 0.5);
-                //cv::imshow("dbg", frame);
+                cv::imshow("dbg", frame);
                 if (iPlay) ProcessFrame(frame);
                 char k = cv::waitKey(delay);
                 if (k == 27)

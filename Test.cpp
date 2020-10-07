@@ -8,11 +8,13 @@ int main(int argc, char *argv[])
 
   #ifdef OPENVINO
 
-   auto camera = CVL::make_camera(source, "pt");
+   auto camera = CVL::make_camera(source, "person");
+   
+   camera->SetName("CV");
 
    camera->Start(
     [](const std::string& e, const std::string& data, std::vector<uint8_t>& frame) {
-      std::cout << "Camera event callback : " << e << " data : " << data << "\n";
+      //std::cout << "Camera event callback : " << e << " data : " << data << "\n";
     }
    );
 
@@ -24,8 +26,8 @@ int main(int argc, char *argv[])
 
    putenv("cpp-cvl-test=true");
 
-   auto camera = CVL::make_camera(source, "person", "gmg", "CSRT");
-   //auto camera = CVL::make_camera(source, "face", "gmg", "CSRT");
+   //auto camera = CVL::make_camera(source, "person", "gmg", "CSRT");
+   auto camera = CVL::make_camera(source, "face", "gmg", "CSRT");
 
    camera->SetName("CV");
 
@@ -34,7 +36,7 @@ int main(int argc, char *argv[])
 
    camera->Start(
     [](const std::string& e, const std::string& data, std::vector<uint8_t>& frame) {
-      std::cout << "Camera event callback : " << e << " data : " << data << "\n";
+      //std::cout << "Camera event callback : " << e << " data : " << data << "\n";
     }
    );
 

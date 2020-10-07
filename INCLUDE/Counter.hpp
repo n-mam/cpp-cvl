@@ -88,12 +88,12 @@ class CCounter
         if ((start.y < refy) && (end.y >= refy))
         {
           d++;
-          std::cout << "start-y : " << start.y << " end-y : " << end.y << ", down\n";
+          //std::cout << "start-y : " << start.y << " end-y : " << end.y << ", down\n";
         }
         else if ((start.y > refy) && (end.y <= refy))
         {
           u++;
-          std::cout << "start-y : " << start.y << " end-y : " << end.y << ", up\n";          
+          //std::cout << "start-y : " << start.y << " end-y : " << end.y << ", up\n";          
         }
       }
       else
@@ -103,12 +103,12 @@ class CCounter
         if ((start.x < refx) && (end.x >= refx))
         {
           r++;
-          std::cout << "start-x : " << start.x << " end-x : " << end.x << ", right\n";
+          //std::cout << "start-x : " << start.x << " end-x : " << end.x << ", right\n";
         }
         else if ((start.x > refx) && (end.x <= refx))
         {
           l++;
-          std::cout << "start-x : " << start.x << " end-x : " << end.x << ", left\n";          
+          //std::cout << "start-x : " << start.x << " end-x : " << end.x << ", left\n";          
         }
       }
 

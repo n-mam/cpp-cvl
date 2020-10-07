@@ -62,3 +62,21 @@ cmake .. -DUSE_AVX_INSTRUCTIONS=1 -DDLIB_NO_GUI_SUPPORT=0
 for building dlib's gui webcam sample
 
 set OPENCV_DIR=C:\opencv\build\install
+
+#opencv with openvino
+
+cmake ^
+-GNinja ^
+-DWITH_INF_ENGINE=ON ^
+-DENABLE_CXX11=ON ^
+-DWITH_OPENGL=ON ^
+-DBUILD_opencv_world=ON ^
+-DOPENCV_ENABLE_NONFREE=ON ^
+-DWITH_OPENCL=ON ^
+-DENABLE_FAST_MATH=1 ^
+-DOPENCV_EXTRA_MODULES_PATH=C:\opencv_contrib\modules ^
+-DCMAKE_INSTALL_PREFIX=C:\opencv\build\install ^
+-DBUILD_EXAMPLES=ON ^
+-DHAVE_opencv_python3=ON ^
+-DBUILD_opencv_rgbd=OFF ^
+-DCMAKE_BUILD_TYPE=Release ..

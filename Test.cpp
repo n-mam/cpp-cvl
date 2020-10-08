@@ -35,8 +35,8 @@ int main(int argc, char *argv[])
    camera->SetProperty("bbarea", "1000");
 
    camera->Start(
-    [](const std::string& e, const std::string& path, const std::string& agegender, std::vector<uint8_t>& frame) {
-      std::cout << "\nCamera event callback [" << e << "]" << " path : " << path << " age/gender : " << agegender << "\n";
+    [](const std::string& e, const std::string& path, const std::string& demography, std::vector<uint8_t>& frame) {
+      std::cout << "\nCamera event callback [" << e << "]" << " Path : " << path << " Demography : " << demography << "\n";
     }
    );
 

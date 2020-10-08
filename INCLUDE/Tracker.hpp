@@ -158,25 +158,25 @@ class CTracker
           path += std::to_string(p.x) + " " + std::to_string(p.y);
         }
 
-        if (tc.iAge.size() != tc.iGender.size()) throw std::exception("age gender size mismatch");
+        if (tc.iAge.size() != tc.iGender.size()) throw std::exception("age-gender size mismatch");
 
-        std::string agegender;
+        std::string demography;
 
         for (int i = 0; i < tc.iAge.size(); i++)
         {
           if (tc.iAge[i].length() && tc.iGender[i].length())
           {
-            if (agegender.size())
+            if (demography.size())
             {
-              agegender += ", ";
+              demography += ", ";
             }
 
-            agegender += tc.iAge[i] + " " + tc.iGender[i];
+            demography += tc.iAge[i] + " " + tc.iGender[i];
           }
         }
 
-        std::cout << "size : " << tc.iTrail.size() << "\n"; 
-        iOnCameraEventCbk("trail", path, agegender, std::vector<uint8_t>());
+        std::cout << "\nsize : " << tc.iTrail.size(); 
+        iOnCameraEventCbk("trail", path, demography, std::vector<uint8_t>());
       }
 
       if (iPurgedContexts.size() > 20)

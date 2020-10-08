@@ -158,7 +158,10 @@ class CTracker
           path += std::to_string(p.x) + " " + std::to_string(p.y);
         }
 
-        if (tc.iAge.size() != tc.iGender.size()) throw std::exception("age-gender size mismatch");
+        if (tc.iAge.size() != tc.iGender.size()) 
+        {
+          throw std::exception("age-gender size mismatch");
+        }
 
         std::string demography;
 

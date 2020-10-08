@@ -43,7 +43,7 @@ class CDetector : public NPL::CSubject<uint8_t, uint8_t>
         std::cerr << e.what() << " : readNet failed\n";
       }
 
-    	if (cv::cuda::getCudaEnabledDeviceCount())
+    	if (0)//cv::cuda::getCudaEnabledDeviceCount())
 	    {
 		    iNetwork.setPreferableBackend(cv::dnn::Backend::DNN_BACKEND_CUDA);
 		    iNetwork.setPreferableTarget(cv::dnn::Target::DNN_TARGET_CUDA);
@@ -52,7 +52,7 @@ class CDetector : public NPL::CSubject<uint8_t, uint8_t>
 	    else
 	    {
 		    iNetwork.setPreferableBackend(cv::dnn::Backend::DNN_BACKEND_INFERENCE_ENGINE);
-		    iNetwork.setPreferableTarget(cv::dnn::Target::DNN_TARGET_OPENCL_FP16);
+		    iNetwork.setPreferableTarget(cv::dnn::Target::DNN_TARGET_CPU);
 		    std::cout << "IE backend and cpu target enabled for inference." << std::endl;
 	    }
     }
@@ -137,7 +137,9 @@ class FaceDetector : public CDetector
 {
   public:
 
-    FaceDetector() : CDetector("ResNetSSD_deploy.prototxt", "ResNetSSD_deploy.caffemodel") 
+    FaceDetector() : 
+      //CDetector("ResNetSSD_deploy.prototxt", "ResNetSSD_deploy.caffemodel")
+      CDetector("face-detection-adas-0001/FP16/face-detection-adas-0001.xml", "face-detection-adas-0001/FP16/face-detection-adas-0001.bin")
     {
       iAgeDetector = std::make_shared<AgeDetector>();
       iGenderDetector = std::make_shared<GenderDetector>();
@@ -178,7 +180,7 @@ class FaceDetector : public CDetector
           {
             //std::cout << "Face detected at " << x1 << "," << y1 << "[" << x2 - x1 << "," << y2 - y1 << "]\n";
 
-            cv::Mat roi = cv::Mat(frame, rect);
+            cv::Mat roi = frame(rect);
 
             Detections age, gender;
 
@@ -225,12 +227,8 @@ class ObjectDetector : public CDetector
     {
       Detections out;
 
-      cv::Mat resized;
-
-      cv::resize(frame, resized, cv::Size(300, 300));
-
       cv::Mat inputBlob = cv::dnn::blobFromImage(
-        resized,
+        frame,
         0.007843f,
         cv::Size(300, 300),
         cv::Scalar(127.5, 127.5, 127.5),
@@ -259,6 +257,7 @@ class ObjectDetector : public CDetector
             y1 = static_cast<int>(detectionMat.at<float>(i, 4) * frame.rows);
             x2 = static_cast<int>(detectionMat.at<float>(i, 5) * frame.cols);
             y2 = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
+            
             out.emplace_back(cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2)), std::string(), std::string());
             //std::cout << "Object(" + iObjectClass[idx] + ") detected at " << x1 << "," << y1 << "[" << x2 - x1 << "," << y2 - y1 << "]\n";
           }

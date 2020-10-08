@@ -7,7 +7,7 @@
 #include <future>
 #include <functional>
 
-using TOnCameraEventCbk = std::function<void (const std::string&, const std::string&, std::vector<uint8_t>&)>;
+using TOnCameraEventCbk = std::function<void (const std::string&, const std::string&, const std::string&, std::vector<uint8_t>&)>;
 
 #include <Source.hpp>
 #include <Tracker.hpp>
@@ -219,22 +219,19 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
           /*
            * exclude detections which overlap with any tracker's context
            */
-          for (auto&& it = detections.begin(); it != detections.end(); )
+          for (auto& d : detections)
           {
-            auto tc = iTracker->MatchDetectionWithTrackingContext(std::get<0>(*it), frame);
+            auto tc = iTracker->MatchDetectionWithTrackingContext(std::get<0>(d), frame);
+
+            if (tc == nullptr)
+            {
+              tc = iTracker->AddNewTrackingContext(frame, std::get<0>(d));
+            }
 
             if (tc)
             {
-              (tc->iAge).push_back(std::get<1>(*it));
-              (tc->iGender).push_back(std::get<2>(*it));
-              it = detections.erase(it);
-            }
-            else
-            { /*
-               * start tracking all new detections
-               */
-              iTracker->AddNewTrackingContext(frame, std::get<0>(*it));
-              it++;
+              (tc->iAge).push_back(std::get<1>(d));
+              (tc->iGender).push_back(std::get<2>(d));
             }
           }
         }
@@ -248,7 +245,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
           {
             std::vector<uchar> buf;
             cv::imencode(".jpg", frame, buf);
-            iOnCameraEventCbk("play", "", buf);
+            iOnCameraEventCbk("play", "", "", buf);
           }
           else
           {
@@ -272,7 +269,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
       if (iOnCameraEventCbk)
       {
-        iOnCameraEventCbk("stop", "", std::vector<uint8_t>());
+        iOnCameraEventCbk("stop", "", "", std::vector<uint8_t>());
       }      
     }
 

@@ -119,7 +119,7 @@ class CTracker
       return nullptr;
     }
 
-    virtual void AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& r) {}
+    virtual TrackingContext * AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& r) { return nullptr; }
 
     virtual std::vector<cv::Rect2d> UpdateTrackingContexts(cv::Mat& frame) { return {}; }
 
@@ -127,7 +127,7 @@ class CTracker
     {
       iOnCameraEventCbk = cbk;
     }
-    
+
   protected:
   
     std::string iType;
@@ -144,21 +144,39 @@ class CTracker
     {
       if (iOnCameraEventCbk)
       {
-        std::string data;
+        std::string path;
 
         for (auto& r : tc.iTrail)
         {
           auto p = GetRectCenter(r);
 
-          if (data.size())
+          if (path.size())
           {
-            data += ", ";
+            path += ", ";
           }
 
-          data += std::to_string(p.x) + " " + std::to_string(p.y);
+          path += std::to_string(p.x) + " " + std::to_string(p.y);
         }
 
-        iOnCameraEventCbk("trail", data, std::vector<uint8_t>());
+        if (tc.iAge.size() != tc.iGender.size()) throw std::exception("age gender size mismatch");
+
+        std::string agegender;
+
+        for (int i = 0; i < tc.iAge.size(); i++)
+        {
+          if (tc.iAge[i].length() && tc.iGender[i].length())
+          {
+            if (agegender.size())
+            {
+              agegender += ", ";
+            }
+
+            agegender += tc.iAge[i] + " " + tc.iGender[i];
+          }
+        }
+
+        std::cout << "size : " << tc.iTrail.size() << "\n"; 
+        iOnCameraEventCbk("trail", path, agegender, std::vector<uint8_t>());
       }
 
       if (iPurgedContexts.size() > 20)
@@ -176,8 +194,11 @@ class OpenCVTracker : public CTracker
 
     OpenCVTracker(const std::string& tracker) : CTracker(tracker) {}
 
-    void AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& roi) override
+    TrackingContext * AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& roi) override
     {
+      if (roi.x + roi.width > m.cols) return nullptr; //roi.width -= m.cols - roi.x;
+      if (roi.y + roi.height > m.rows) return nullptr; //roi.height -= m.rows - roi.y;
+
       TrackingContext tc;
 
       cv::TrackerCSRT::Params params;
@@ -187,12 +208,11 @@ class OpenCVTracker : public CTracker
 
       tc.iTrail.push_back(roi);
 
-      if (roi.x + roi.width > m.cols) return; //roi.width -= m.cols - roi.x;
-      if (roi.y + roi.height > m.rows) return; //roi.height -= m.rows - roi.y;
-
       tc.iTracker->init(m, roi);
 
       iTrackingContexts.push_back(tc);
+
+      return &(iTrackingContexts.back());
     }
 
     std::vector<cv::Rect2d> UpdateTrackingContexts(cv::Mat& m) override

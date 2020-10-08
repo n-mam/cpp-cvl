@@ -21,13 +21,13 @@ int main(int argc, char *argv[])
    getchar();
 
    camera->Stop();
-  
+
   #else
 
    putenv("cpp-cvl-test=true");
 
-   auto camera = CVL::make_camera(source, "person", "gmg", "CSRT");
-   //auto camera = CVL::make_camera(source, "face", "gmg", "CSRT");
+   //auto camera = CVL::make_camera(source, "person", "gmg", "CSRT");
+   auto camera = CVL::make_camera(source, "face", "gmg", "CSRT");
 
    camera->SetName("CV");
 
@@ -35,8 +35,8 @@ int main(int argc, char *argv[])
    camera->SetProperty("bbarea", "1000");
 
    camera->Start(
-    [](const std::string& e, const std::string& data, std::vector<uint8_t>& frame) {
-      //std::cout << "Camera event callback : " << e << " data : " << data << "\n";
+    [](const std::string& e, const std::string& path, const std::string& agegender, std::vector<uint8_t>& frame) {
+      std::cout << "\nCamera event callback [" << e << "]" << " path : " << path << " age/gender : " << agegender << "\n";
     }
    );
 

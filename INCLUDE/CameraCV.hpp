@@ -241,6 +241,10 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
         {
           std::lock_guard<std::mutex> lg(iLock);
 
+          auto fps = (float) iSource->GetCurrentOffset() / (float)((GetTickCount() - startTime) / 1000);
+          cv::putText(frame, "fps : " + std::to_string(fps), cv::Point(5, 10), 
+                 cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 0, 0), 1);
+
           if (iPlay)
           {
             std::vector<uchar> buf;
@@ -251,9 +255,6 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
           {
             if (GetName() == "CV")
             {
-              auto fps = (float) iSource->GetCurrentOffset() / (float)((GetTickCount() - startTime) / 1000);
-              cv::putText(frame, "fps : " + std::to_string(fps), cv::Point(5, 10), 
-                     cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 0, 0), 1);
               cv::imshow(this->GetName().c_str(), frame);
             }
           }

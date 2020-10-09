@@ -216,9 +216,9 @@ class ObjectDetector : public CDetector
 {
   public:
 
-    ObjectDetector(const std::string& target) :
-     //CDetector("person-detection-retail-0013/FP16/person-detection-retail-0013.bin", "person-detection-retail-0013/FP16/person-detection-retail-0013.xml") 
-     CDetector("MobileNetSSD_deploy.prototxt", "MobileNetSSD_deploy.caffemodel") 
+    ObjectDetector(const std::string& target) :  //person-detection-retail-0013 pedestrian-detection-adas-0002
+     CDetector("person-detection-retail-0013/FP16/person-detection-retail-0013.xml", "person-detection-retail-0013/FP16/person-detection-retail-0013.bin") 
+     //CDetector("MobileNetSSD_deploy.prototxt", "MobileNetSSD_deploy.caffemodel") 
     {
       iTarget = target;
     }
@@ -229,11 +229,12 @@ class ObjectDetector : public CDetector
 
       cv::Mat inputBlob = cv::dnn::blobFromImage(
         frame,
-        0.007843f,
-        cv::Size(300, 300),
-        cv::Scalar(127.5, 127.5, 127.5),
-        false, 
-        false);
+        1,
+        cv::Size(672, 384), //300, 300
+        cv::Scalar(),
+        false,
+        false,
+        CV_8U); // ??
 
       iNetwork.setInput(inputBlob);
 
@@ -245,19 +246,18 @@ class ObjectDetector : public CDetector
       {
         float confidence = detectionMat.at<float>(i, 2);
 
-        if (confidence > 0.6)
+        if (confidence > 0.7)
         {
           int idx, x1, y1, x2, y2;
 
           idx = static_cast<int>(detectionMat.at<float>(i, 1));
 
-          if (iObjectClass[idx] == iTarget)
+          if (1) //iObjectClass[idx] == iTarget)
           {
             x1 = static_cast<int>(detectionMat.at<float>(i, 3) * frame.cols);
             y1 = static_cast<int>(detectionMat.at<float>(i, 4) * frame.rows);
             x2 = static_cast<int>(detectionMat.at<float>(i, 5) * frame.cols);
             y2 = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
-            
             out.emplace_back(cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2)), std::string(), std::string());
             //std::cout << "Object(" + iObjectClass[idx] + ") detected at " << x1 << "," << y1 << "[" << x2 - x1 << "," << y2 - y1 << "]\n";
           }

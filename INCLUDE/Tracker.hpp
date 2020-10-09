@@ -16,7 +16,10 @@ struct TrackingContext
 
   std::vector<cv::Rect2d> iTrail;  // track bb trail
 
-  std::vector<std::string> iAge;
+  std::vector<float> iAge;
+
+  float _maleScore = 0;
+  float _femaleScore = 0;
 
   std::vector<std::string> iGender;
 
@@ -24,20 +27,47 @@ struct TrackingContext
 
   bool IsFrozen(void)
   {
-    bool fRet = false;
-
     if (iTrail.size() >= 8)
     {
       auto& last = iTrail[iTrail.size() - 1];
       auto& prev = iTrail[iTrail.size() - 8];
-
       auto d = Distance(GetRectCenter(last), GetRectCenter(prev));
+      if (d <= 2) return true;
+    }
+    return false;
+  }
 
-      if (d <= 2) fRet = true;
+  void updateAge(float value)
+  {
+    if (value < 0)
+      return;
+    float _age = (iAge.size() == 0) ? value : 0.95f * iAge.back() + 0.05f * value;
+    iAge.push_back(_age);
+  }
+
+  void updateGender(float value) 
+  {
+    if (value < 0)
+      return;
+    if (value > 0.5) {
+      _maleScore += value - 0.5f;
+    } else {
+      _femaleScore += 0.5f - value;
     }
 
-    return fRet;
+    iGender.push_back(isMale() ? "M" : "F");
   }
+
+  int getAge() 
+  {
+    return static_cast<int>(std::floor(iAge.back() + 0.5f));
+  }
+
+  bool isMale() 
+  {
+    return _maleScore > _femaleScore;
+  }
+
 };
 
 using TCbkTracker = std::function<bool (const TrackingContext&)>;
@@ -93,6 +123,14 @@ class CTracker
         }
 
         auto& bb = tc.iTrail.back();
+
+        if (tc.iAge.size()) {
+          auto ag = (tc.isMale() ? std::string("M") : std::string("F")) + ":" + std::to_string(tc.getAge());
+          cv::putText(m, ag,
+               cv::Point((int)bb.x, (int)(bb.y - 5)), cv::FONT_HERSHEY_SIMPLEX, 
+               0.5, cv::Scalar(255, 255, 255), 1);
+        }
+
         cv::rectangle(m, bb, cv::Scalar(0, 0, 255), 1, 1); //tracking red
       }
 
@@ -167,18 +205,20 @@ class CTracker
 
         for (int i = 0; i < tc.iAge.size(); i++)
         {
-          if (tc.iAge[i].length() && tc.iGender[i].length())
+          if (demography.size())
           {
-            if (demography.size())
-            {
-              demography += ", ";
-            }
-
-            demography += tc.iAge[i] + " " + tc.iGender[i];
+            demography += ", ";
           }
+
+          demography += std::to_string((int)tc.iAge[i]) + " " + tc.iGender[i];         
         }
 
-        std::cout << "\nsize : " << tc.iTrail.size(); 
+        if (demography.size())
+        {
+          demography += std::string(", ") + std::to_string(tc.getAge()) + std::string(" ") + (tc.isMale() ? std::string("M") : std::string("F"));
+        }
+
+        std::cout << "\nsize : " << tc.iTrail.size();
         iOnCameraEventCbk("trail", path, demography, std::vector<uint8_t>());
       }
 

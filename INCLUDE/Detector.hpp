@@ -11,7 +11,7 @@
 
 #include <CSubject.hpp>
 
-using Detections = std::vector<std::tuple<cv::Rect2d, std::string, std::string>>;
+using Detections = std::vector<std::tuple<cv::Rect2d, float, float>>;
 
 class CDetector : public NPL::CSubject<uint8_t, uint8_t>
 {
@@ -43,7 +43,7 @@ class CDetector : public NPL::CSubject<uint8_t, uint8_t>
         std::cerr << e.what() << " : readNet failed\n";
       }
 
-    	if (0)//cv::cuda::getCudaEnabledDeviceCount())
+    	if (cv::cuda::getCudaEnabledDeviceCount())
 	    {
 		    iNetwork.setPreferableBackend(cv::dnn::Backend::DNN_BACKEND_CUDA);
 		    iNetwork.setPreferableTarget(cv::dnn::Target::DNN_TARGET_CUDA);
@@ -74,75 +74,49 @@ class CDetector : public NPL::CSubject<uint8_t, uint8_t>
 
 using SPCDetector = std::shared_ptr<CDetector>;
 
-class AgeDetector : public CDetector
+class AgeGenderDetector : public CDetector
 {
   public:
 
-    AgeDetector() : CDetector("age_net.caffemodel", "deploy_age.prototxt") 
+    AgeGenderDetector() : CDetector(
+        "age-gender-recognition-retail-0013/FP16/age-gender-recognition-retail-0013.xml",
+        "age-gender-recognition-retail-0013/FP16/age-gender-recognition-retail-0013.bin")
     {
     }
 
     virtual Detections Detect(cv::Mat& frame) override
     {
-      auto blob = cv::dnn::blobFromImage(
-         frame, 1, cv::Size(227, 227), 
-         cv::Scalar(78.4263377603, 87.7689143744, 114.895847746), 
-         false);
+      auto blob = cv::dnn::blobFromImage(frame, 1, cv::Size(62, 62));
       iNetwork.setInput(blob);
-      std::vector<float> agePreds = iNetwork.forward();
-      auto max_indice_age = std::distance(agePreds.begin(), max_element(agePreds.begin(), agePreds.end()));
-      //std::cout << "age : " << ageList[max_indice_age] << "\n";
-      return {{cv::Rect2d(), ageList[max_indice_age], std::string()}};
+      std::vector<cv::Mat> out;
+      std::vector<cv::String> layers = iNetwork.getUnconnectedOutLayersNames();
+      iNetwork.forward(out, layers);
+      return {
+        {
+          cv::Rect2d(), 
+          out[0].at<float>(0) * 100,
+          out[1].at<float>(1)
+        }
+      };
     }
 
   public:
 
   protected:
 
-    std::vector<std::string> ageList = {"(0-2)", "(4-6)", "(8-12)", "(15-20)", "(25-32)", "(38-43)", "(48-53)", "(60-100)"};
 };
 
-class GenderDetector : public CDetector
-{
-  public:
-
-    GenderDetector() : CDetector("gender_net.caffemodel", "deploy_gender.prototxt") 
-    {
-    }
-
-    virtual Detections Detect(cv::Mat& frame) override
-    {
-      auto blob = cv::dnn::blobFromImage(
-         frame, 1, cv::Size(227, 227), 
-         cv::Scalar(78.4263377603, 87.7689143744, 114.895847746), 
-         false);
-      iNetwork.setInput(blob);
-      std::vector<float> genderPreds = iNetwork.forward();
-      auto max_index_gender = std::distance(genderPreds.begin(), max_element(genderPreds.begin(), genderPreds.end()));
-      //std::cout << "gender : " << iGender.back() << "\n";
-      return {{cv::Rect2d(), std::string(), genderList[max_index_gender]}};
-    }
-
-  public:
-
-  protected:
-
-    std::vector<std::string> genderList = {"Male", "Female"};
-};
-
-using SPAgeDetector = std::shared_ptr<AgeDetector>;
-using SPGenderDetector = std::shared_ptr<GenderDetector>;
+using SPAgeGenderDetector = std::shared_ptr<AgeGenderDetector>;
 
 class FaceDetector : public CDetector
 {
   public:
 
-    FaceDetector() : 
-      //CDetector("ResNetSSD_deploy.prototxt", "ResNetSSD_deploy.caffemodel")
-      CDetector("face-detection-adas-0001/FP16/face-detection-adas-0001.xml", "face-detection-adas-0001/FP16/face-detection-adas-0001.bin")
+    FaceDetector() : CDetector(
+        "face-detection-adas-0001/FP16/face-detection-adas-0001.xml", 
+        "face-detection-adas-0001/FP16/face-detection-adas-0001.bin")
     {
-      iAgeDetector = std::make_shared<AgeDetector>();
-      iGenderDetector = std::make_shared<GenderDetector>();
+      iAgeGenderDetector = std::make_shared<AgeGenderDetector>();
     }
 
     virtual Detections Detect(cv::Mat& frame) override
@@ -152,7 +126,7 @@ class FaceDetector : public CDetector
       cv::Mat inputBlob = cv::dnn::blobFromImage(
         frame,
         1.0f,
-        cv::Size(300, 300),
+        cv::Size(672, 384), //300, 300),
         cv::Scalar(104.0, 177.0, 123.0),
         false,
         false);
@@ -178,27 +152,16 @@ class FaceDetector : public CDetector
 
           if (IsRectInsideMat(rect, frame))
           {
-            //std::cout << "Face detected at " << x1 << "," << y1 << "[" << x2 - x1 << "," << y2 - y1 << "]\n";
-
             cv::Mat roi = frame(rect);
 
-            Detections age, gender;
+            Detections ag;
 
-            if (iAgeDetector)
+            if (iAgeGenderDetector)
             {
-              age = iAgeDetector->Detect(roi);
+              ag = iAgeGenderDetector->Detect(roi);
             }
 
-            if (iGenderDetector)
-            {
-              gender = iGenderDetector->Detect(roi);
-            }
-
-            out.emplace_back(rect, std::get<1>(age[0]), std::get<2>(gender[0]));
-
-            cv::putText(frame, std::get<2>(gender[0]) + std::get<1>(age[0]),
-               cv::Point((int)rect.x, (int)(rect.y - 5)), cv::FONT_HERSHEY_SIMPLEX, 
-               0.5, cv::Scalar(0, 0, 255), 1);
+            out.emplace_back(rect, std::get<1>(ag[0]), std::get<2>(ag[0]));
           }
         }
       }
@@ -208,16 +171,17 @@ class FaceDetector : public CDetector
 
   protected:
 
-    SPAgeDetector iAgeDetector = nullptr;
-    SPGenderDetector iGenderDetector = nullptr;
+    SPAgeGenderDetector iAgeGenderDetector = nullptr;
+
 };
 
 class ObjectDetector : public CDetector
 {
   public:
-
-    ObjectDetector(const std::string& target) :  //person-detection-retail-0013 pedestrian-detection-adas-0002
-     CDetector("person-detection-retail-0013/FP16/person-detection-retail-0013.xml", "person-detection-retail-0013/FP16/person-detection-retail-0013.bin") 
+    //person-detection-retail-0013 pedestrian-detection-adas-0002
+    ObjectDetector(const std::string& target) : CDetector(
+        "person-detection-retail-0013/FP16/person-detection-retail-0013.xml", 
+        "person-detection-retail-0013/FP16/person-detection-retail-0013.bin") 
      //CDetector("MobileNetSSD_deploy.prototxt", "MobileNetSSD_deploy.caffemodel") 
     {
       iTarget = target;
@@ -230,14 +194,14 @@ class ObjectDetector : public CDetector
       cv::Mat inputBlob = cv::dnn::blobFromImage(
         frame,
         1,
-        cv::Size(672, 384), //300, 300
+        cv::Size(544, 320)); /*, //300, 300
         cv::Scalar(),
         false,
         false,
-        CV_8U); // ??
+        CV_8U);*/
 
       iNetwork.setInput(inputBlob);
-
+      
       cv::Mat detection = iNetwork.forward();
 
       cv::Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
@@ -246,7 +210,7 @@ class ObjectDetector : public CDetector
       {
         float confidence = detectionMat.at<float>(i, 2);
 
-        if (confidence > 0.7)
+        if (confidence > 0.6)
         {
           int idx, x1, y1, x2, y2;
 
@@ -258,8 +222,7 @@ class ObjectDetector : public CDetector
             y1 = static_cast<int>(detectionMat.at<float>(i, 4) * frame.rows);
             x2 = static_cast<int>(detectionMat.at<float>(i, 5) * frame.cols);
             y2 = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
-            out.emplace_back(cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2)), std::string(), std::string());
-            //std::cout << "Object(" + iObjectClass[idx] + ") detected at " << x1 << "," << y1 << "[" << x2 - x1 << "," << y2 - y1 << "]\n";
+            out.emplace_back(cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2)), -1.0f, -1.0f);
           }
         }
       }
@@ -352,7 +315,7 @@ class BackgroundSubtractor : public CDetector
           cv::putText(frame, std::to_string((int)(bb.width * bb.height)),
              cv::Point((int)bb.x, (int)(bb.y - 5)), cv::FONT_HERSHEY_SIMPLEX, 
              0.5, cv::Scalar(0, 0, 255), 1);
-          out.emplace_back(bb, std::string(), std::string());
+          out.emplace_back(bb, -1.0f, -1.0f);
         }
       }
 

@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Test CVL openvino",
+            "name": "TestCVL openvino",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/intel64/Release/TestCVL.exe",
@@ -16,13 +16,24 @@
             "externalConsole": true
         },
         {
-            "name": "Test CVL opencv",
+            "name": "TestCVL opencv",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/Release/TestCVL.exe",
-            "args": ["f:\\overpass.mp4"],
+            "args": ["f:\\my.mp4"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",
+            "environment": [],
+            "externalConsole": true
+        },
+        {
+            "name": "interactive_face_detection_demo",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/../build/intel64/Release/interactive_face_detection_demo.exe",
+            "args": ["-i", "f:\\my.mp4", "-m", "../cpp-cvl/MODELS/face-detection-adas-0001/FP16/face-detection-adas-0001.xml", "-m_ag", "../cpp-cvl/MODELS/age-gender-recognition-retail-0013/FP16/age-gender-recognition-retail-0013.xml"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/../build",
             "environment": [],
             "externalConsole": true
         }

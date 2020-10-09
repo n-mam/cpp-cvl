@@ -230,8 +230,8 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
             if (tc)
             {
-              (tc->iAge).push_back(std::get<1>(d));
-              (tc->iGender).push_back(std::get<2>(d));
+              tc->updateAge(std::get<1>(d));
+              tc->updateGender(std::get<2>(d));
             }
           }
         }
@@ -242,8 +242,8 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
           std::lock_guard<std::mutex> lg(iLock);
 
           auto fps = (float) iSource->GetCurrentOffset() / (float)((GetTickCount() - startTime) / 1000);
-          cv::putText(frame, "fps : " + std::to_string(fps), cv::Point(5, 10), 
-                 cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 0, 0), 1);
+          cv::putText(frame, "FPS : " + std::to_string(fps), cv::Point(5, 10), 
+                 cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 255, 255), 1);
 
           if (iPlay)
           {

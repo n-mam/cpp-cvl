@@ -128,7 +128,7 @@ class CTracker
           auto ag = (tc.isMale() ? std::string("M") : std::string("F")) + ":" + std::to_string(tc.getAge());
           cv::putText(m, ag,
                cv::Point((int)bb.x, (int)(bb.y - 5)), cv::FONT_HERSHEY_SIMPLEX, 
-               0.5, cv::Scalar(255, 255, 255), 1);
+               0.4, cv::Scalar(255, 255, 255), 1);
         }
 
         cv::rectangle(m, bb, cv::Scalar(0, 0, 255), 1, 1); //tracking red

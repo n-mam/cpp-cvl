@@ -21,9 +21,7 @@ class CDetector : public NPL::CSubject<uint8_t, uint8_t>
 
     CDetector(const std::string& config, const std::string& weight)
     {
-      char *isTest = getenv("cpp-cvl-test");
-
-      if (isTest)
+      if (getenv("cpp-cvl-test"))
       {
         iConfigFile = "../../cpp-cvl/MODELS/" + config;
         iWeightFile = "../../cpp-cvl/MODELS/" + weight;
@@ -175,16 +173,16 @@ class FaceDetector : public CDetector
 
 };
 
-class ObjectDetector : public CDetector
+class PeopleDetector : public CDetector
 {
   public:
-    //person-detection-retail-0013 pedestrian-detection-adas-0002
-    ObjectDetector(const std::string& target) : CDetector(
+
+    PeopleDetector() : CDetector(
         "person-detection-retail-0013/FP16/person-detection-retail-0013.xml", 
-        "person-detection-retail-0013/FP16/person-detection-retail-0013.bin") 
-     //CDetector("MobileNetSSD_deploy.prototxt", "MobileNetSSD_deploy.caffemodel") 
+        "person-detection-retail-0013/FP16/person-detection-retail-0013.bin")
     {
-      iTarget = target;
+      //person-detection-retail-0013 
+      //pedestrian-detection-adas-0002
     }
 
     virtual Detections Detect(cv::Mat& frame) override
@@ -210,19 +208,80 @@ class ObjectDetector : public CDetector
       {
         float confidence = detectionMat.at<float>(i, 2);
 
-        if (confidence > 0.6)
+        if (confidence > 0.7)
+        {
+          int idx, x1, y1, x2, y2;
+
+          x1 = static_cast<int>(detectionMat.at<float>(i, 3) * frame.cols);
+          y1 = static_cast<int>(detectionMat.at<float>(i, 4) * frame.rows);
+          x2 = static_cast<int>(detectionMat.at<float>(i, 5) * frame.cols);
+          y2 = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
+
+          out.emplace_back(
+            cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2)), -1.0f, -1.0f
+          );
+        }
+      }
+
+      return out;
+    }
+
+  protected:
+
+};
+
+class ObjectDetector : public CDetector
+{
+  public:
+
+    ObjectDetector(const std::string& target) :
+     CDetector("MobileNetSSD_deploy.prototxt", "MobileNetSSD_deploy.caffemodel") 
+    {
+      iTarget = target;
+    }
+
+    virtual Detections Detect(cv::Mat& frame) override
+    {
+      Detections out;
+
+      cv::Mat resized;
+
+      cv::resize(frame, resized, cv::Size(300, 300));
+
+      cv::Mat inputBlob = cv::dnn::blobFromImage(
+        resized,
+        0.007843f,
+        cv::Size(300, 300),
+        cv::Scalar(127.5, 127.5, 127.5),
+        false, 
+        false);
+
+      iNetwork.setInput(inputBlob);
+
+      cv::Mat detection = iNetwork.forward();
+
+      cv::Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
+
+      for (int i = 0; i < detectionMat.rows; i++)
+      {
+        float confidence = detectionMat.at<float>(i, 2);
+
+        if (confidence > 0.7)
         {
           int idx, x1, y1, x2, y2;
 
           idx = static_cast<int>(detectionMat.at<float>(i, 1));
 
-          if (1) //iObjectClass[idx] == iTarget)
+          if (iObjectClass[idx] == iTarget)
           {
             x1 = static_cast<int>(detectionMat.at<float>(i, 3) * frame.cols);
             y1 = static_cast<int>(detectionMat.at<float>(i, 4) * frame.rows);
             x2 = static_cast<int>(detectionMat.at<float>(i, 5) * frame.cols);
             y2 = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
-            out.emplace_back(cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2)), -1.0f, -1.0f);
+
+            out.emplace_back(
+               cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2)), -1.0f, -1.0f
+            );
           }
         }
       }

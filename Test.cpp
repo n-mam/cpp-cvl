@@ -4,11 +4,12 @@
 
 int main(int argc, char *argv[])
 {
-  std::string source = argv[1];
+  std::string target = argv[1];
+  std::string source = argv[2];
 
   #ifdef OPENVINO
 
-   auto camera = CVL::make_camera(source, "face");
+   auto camera = CVL::make_camera(source, target);
    
    camera->SetName("CV");
 
@@ -26,8 +27,7 @@ int main(int argc, char *argv[])
 
    putenv("cpp-cvl-test=true");
 
-   auto camera = CVL::make_camera(source, "person", "gmg", "CSRT");
-   //auto camera = CVL::make_camera(source, "face", "gmg", "CSRT");
+   auto camera = CVL::make_camera(source, target, "gmg", "CSRT");
 
    camera->SetName("CV");
 

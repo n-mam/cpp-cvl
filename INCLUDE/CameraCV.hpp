@@ -36,9 +36,9 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
         iSource = std::make_shared<CSource>(source);
       }
 
-      if (target == "person" || target == "car")
+      if (target == "people")
       {
-        iDetector = std::make_shared<ObjectDetector>(target);
+        iDetector = std::make_shared<PeopleDetector>();
       }
       else if (target == "face")
       {
@@ -47,6 +47,10 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       else if (target == "mocap")
       {
         iDetector = std::make_shared<BackgroundSubtractor>(algo);
+      }
+      else
+      {
+        iDetector = std::make_shared<ObjectDetector>(target);
       }
 
       iTracker = std::make_shared<OpenCVTracker>(tracker);

@@ -113,8 +113,8 @@ class FaceDetector : public CDetector
   public:
 
     FaceDetector() : CDetector(
-        "face-detection-adas-0001/FP16/face-detection-adas-0001.xml", 
-        "face-detection-adas-0001/FP16/face-detection-adas-0001.bin")
+        "face-detection-retail-0005/FP16/face-detection-retail-0005.xml", 
+        "face-detection-retail-0005/FP16/face-detection-retail-0005.bin")
     {
       iAgeGenderDetector = std::make_shared<AgeGenderDetector>();
     }
@@ -126,7 +126,7 @@ class FaceDetector : public CDetector
       cv::Mat inputBlob = cv::dnn::blobFromImage(
         frame,
         1.0f,
-        cv::Size(672, 384), //300, 300),
+        cv::Size(300, 300), //672, 384), //
         cv::Scalar(104.0, 177.0, 123.0),
         false,
         false);

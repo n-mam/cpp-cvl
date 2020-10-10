@@ -25,8 +25,13 @@ struct TrackingContext
 
   bool iSkip = false;
 
+  uint32_t lost = 0;
+
   bool IsFrozen(void)
-  {
+  {/*
+    * valid only for FOV where the subject is 
+    * moving eithe top-down or left to right
+    */
     if (iTrail.size() >= 8)
     {
       auto& last = iTrail[iTrail.size() - 1];
@@ -263,7 +268,7 @@ class OpenCVTracker : public CTracker
       if (!iTrackingContexts.size())
       {
         return {};
-      } 
+      }
 
       std::vector<cv::Rect2d> out;
 
@@ -271,13 +276,13 @@ class OpenCVTracker : public CTracker
       {
         auto& tc = iTrackingContexts[i - 1];
 
-        if (tc.IsFrozen())
-        {
-          PurgeAndSaveTrackingContext(tc);
-          iTrackingContexts.erase(iTrackingContexts.begin() + (i - 1));
-          //std::cout << "removed frozen tc\n";
-          continue;
-        }
+        // if (tc.IsFrozen())
+        // {
+        //   PurgeAndSaveTrackingContext(tc);
+        //   iTrackingContexts.erase(iTrackingContexts.begin() + (i - 1));
+        //   //std::cout << "removed frozen tc\n";
+        //   continue;
+        // }
 
         cv::Rect2d bb;
 
@@ -298,16 +303,16 @@ class OpenCVTracker : public CTracker
           }
           else
           {
+            std::cout << "Tracker at " << (i - 1) << " out of the bound, size : " << tc.iTrail.size() << "\n";
             PurgeAndSaveTrackingContext(tc);
             iTrackingContexts.erase(iTrackingContexts.begin() + (i - 1));
-            //std::cout << "Tracker at " << (i - 1) << " is out of the bounds, size : " << iTrackingContexts.size() << "\n";
           }
         }
         else
         {
+          std::cout << "Tracker at " << (i - 1) << " lost, size : " << iTrackingContexts.size() << "\n";
           PurgeAndSaveTrackingContext(tc);
           iTrackingContexts.erase(iTrackingContexts.begin() + (i - 1));
-          //std::cout << "Tracker at " << (i - 1) << " lost, size : " << iTrackingContexts.size() << "\n";
         }
       }
 

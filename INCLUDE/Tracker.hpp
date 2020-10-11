@@ -16,6 +16,8 @@ struct TrackingContext
 
   std::vector<cv::Rect2d> iTrail;  // track bb trail
 
+  std::vector<cv::Mat> iThumbnails;
+
   std::vector<float> iAge;
 
   float _maleScore = 0;
@@ -149,13 +151,19 @@ class CTracker
       iCounter->DisplayRefLineAndCounts(m);
     }
 
-    TrackingContext * MatchDetectionWithTrackingContext(cv::Rect2d roi, cv::Mat& m)
+    TrackingContext * MatchDetectionWithTrackingContext(cv::Rect2d& roi, cv::Mat& mat)
     {
       for (auto& tc : iTrackingContexts)
       {
         if (DoesRectOverlapRect(roi, tc.iTrail.back()))
         {
-          cv::rectangle(m, roi, cv::Scalar(255, 0, 0 ), 1, 1);  // detection blue
+          if (IsRectInsideMat(roi, mat))
+          {
+            tc.iThumbnails.push_back(mat(roi).clone());
+          }
+
+          cv::rectangle(mat, roi, cv::Scalar(255, 0, 0 ), 1, 1);  // detection blue
+
           return &tc;
         }
       }
@@ -223,8 +231,14 @@ class CTracker
           demography += std::string(", ") + std::to_string(tc.getAge()) + std::string(" ") + (tc.isMale() ? std::string("M") : std::string("F"));
         }
 
-        std::cout << "\nsize : " << tc.iTrail.size();
-        iOnCameraEventCbk("trail", path, demography, std::vector<uint8_t>());
+        std::vector<uchar> thumb;
+
+        if (tc.iThumbnails.size())
+        {
+          cv::imencode(".jpg", tc.iThumbnails[tc.iThumbnails.size()/2], thumb);
+        }
+
+        iOnCameraEventCbk("trail", path, demography, thumb /*std::vector<uint8_t>()*/);
       }
 
       if (iPurgedContexts.size() > 20)

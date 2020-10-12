@@ -214,12 +214,6 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
            * run detector
            */
           auto detections = iDetector->Detect(frame);
-
-          // auto& f1 = std::async(std::launch::async, &CTracker::UpdateTrackingContexts, iTracker.get(), frame);
-          // auto& f2 = std::async(std::launch::async, &CDetector::Detect, iDetector.get(), frame);
-          // auto updates = f1.get(); 
-          // auto detections = f2.get();
-
           /*
            * exclude detections which overlap with any tracker's context
            */
@@ -300,3 +294,8 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 using SPCCamera = std::shared_ptr<CCamera>;
 
 #endif
+
+// auto& f1 = std::async(std::launch::async, &CTracker::UpdateTrackingContexts, iTracker.get(), frame);
+// auto& f2 = std::async(std::launch::async, &CDetector::Detect, iDetector.get(), frame);
+// auto updates = f1.get(); 
+// auto detections = f2.get();

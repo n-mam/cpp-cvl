@@ -153,20 +153,40 @@ class CTracker
 
     TrackingContext * MatchDetectionWithTrackingContext(cv::Rect2d& roi, cv::Mat& mat)
     {
-      for (auto& tc : iTrackingContexts)
+      int maxArea = 0, index = -1;
+
+      for (int i = 0; i < iTrackingContexts.size(); i++) // auto& tc : iTrackingContexts)
       {
+        auto& tc = iTrackingContexts[i];
+
         if (DoesRectOverlapRect(roi, tc.iTrail.back()))
         {
-          if (IsRectInsideMat(roi, mat))
+          auto intersection = roi & tc.iTrail.back();
+
+          auto area = intersection.width * intersection.width;
+
+          if (area > maxArea)
           {
-            tc.iThumbnails.push_back(mat(roi).clone());
+            maxArea = area;
+            index = i;
           }
-
-          cv::rectangle(mat, roi, cv::Scalar(255, 0, 0 ), 1, 1);  // detection blue
-
-          return &tc;
         }
       }
+
+      if (index >= 0)
+      {
+        auto& tc = iTrackingContexts[index];
+
+        if (IsRectInsideMat(roi, mat))
+        {
+          tc.iThumbnails.push_back(mat(roi).clone());
+        }
+
+        cv::rectangle(mat, roi, cv::Scalar(255, 0, 0 ), 1, 1);  // detection blue
+
+        return &tc;
+      }
+
       return nullptr;
     }
 
@@ -193,7 +213,7 @@ class CTracker
 
     virtual void PurgeAndSaveTrackingContext(TrackingContext& tc)
     {
-      if (iOnCameraEventCbk)
+      if (iOnCameraEventCbk && tc.iThumbnails.size())
       {
         std::string path;
 
@@ -232,13 +252,11 @@ class CTracker
         }
 
         std::vector<uchar> thumb;
+        cv::imencode(".jpg", tc.iThumbnails[tc.iThumbnails.size()/2], thumb);
 
-        if (tc.iThumbnails.size())
-        {
-          cv::imencode(".jpg", tc.iThumbnails[tc.iThumbnails.size()/2], thumb);
-        }
+        //cv::imwrite("some.jpg", tc.iThumbnails[tc.iThumbnails.size()/2]);
 
-        iOnCameraEventCbk("trail", path, demography, thumb /*std::vector<uint8_t>()*/);
+        iOnCameraEventCbk("trail", path, demography, thumb);
       }
 
       if (iPurgedContexts.size() > 20)
@@ -260,6 +278,13 @@ class OpenCVTracker : public CTracker
     {
       if (roi.x + roi.width > m.cols) return nullptr; //roi.width -= m.cols - roi.x;
       if (roi.y + roi.height > m.rows) return nullptr; //roi.height -= m.rows - roi.y;
+
+      if ((roi.y < 12) || (roi.y > m.rows - 12))
+      {
+        cv::rectangle(m, roi, cv::Scalar(255, 255, 255), 1, 1);
+        return nullptr;
+      }
+        
 
       TrackingContext tc;
 

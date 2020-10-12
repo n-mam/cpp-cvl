@@ -20,7 +20,7 @@
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/Release/TestCVL.exe",
-            "args": ["f:\\my.mp4"],
+            "args": ["person", "f:\\overpass.mp4"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build",
             "environment": [],

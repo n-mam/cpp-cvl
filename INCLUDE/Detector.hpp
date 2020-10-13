@@ -394,4 +394,45 @@ class BackgroundSubtractor : public CDetector
 
 };
 
+void FilterDetections(Detections& detections, cv::Mat& m)
+{
+  for (auto& it = detections.begin(); it != detections.end(); )
+  {
+    bool remove = false;
+
+    auto& roi = std::get<0>(*it);
+
+    if (roi.x + roi.width > m.cols || roi.y + roi.height > m.rows)
+    {
+      remove = true;
+    }
+
+    if ((roi.y < 5) || ((roi.y + roi.height) > (m.rows - 5)))
+    { //exclude near-to-frame detections, white
+      cv::rectangle(m, roi, cv::Scalar(255, 255, 255), 1, 1); 
+      remove =true;
+    }
+    //overlapping detections
+    for (auto& d : detections)
+    {
+      if (std::get<0>(d) != roi)
+      {
+        if ((roi & std::get<0>(d)).area())
+        {
+          remove = true;
+          break;
+        }
+      }
+    }
+
+    if (remove)
+    {
+      it = detections.erase(it);
+    }
+    else
+    {
+      it++;
+    }
+  }
+}
 #endif

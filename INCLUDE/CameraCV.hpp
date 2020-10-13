@@ -214,6 +214,8 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
            * run detector
            */
           auto detections = iDetector->Detect(frame);
+
+          FilterDetections(detections, frame);
           /*
            * Match detections with the best tracking context
            */
@@ -234,10 +236,9 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
               }
             }
           }
-
         }
 
-        iTracker->RenderDisplacementAndPaths(frame);
+        iTracker->RenderDisplacementAndPaths(frame, GetName() == "CV");
 
         {
           std::lock_guard<std::mutex> lg(iLock);

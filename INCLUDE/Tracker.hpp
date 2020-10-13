@@ -27,8 +27,6 @@ struct TrackingContext
 
   bool iSkip = false;
 
-  uint32_t lost = 0;
-
   bool IsFrozen(void)
   {/*
     * valid only for FOV where the subject is 
@@ -153,9 +151,9 @@ class CTracker
 
     TrackingContext * MatchDetectionWithTrackingContext(cv::Rect2d& roi, cv::Mat& mat)
     {
-      int maxArea = 0, index = -1;
+      int maxArea = 0, maxIndex = -1;
 
-      for (int i = 0; i < iTrackingContexts.size(); i++) // auto& tc : iTrackingContexts)
+      for (int i = 0; i < iTrackingContexts.size(); i++)
       {
         auto& tc = iTrackingContexts[i];
 
@@ -168,14 +166,14 @@ class CTracker
           if (area > maxArea)
           {
             maxArea = area;
-            index = i;
+            maxIndex = i;
           }
         }
       }
 
-      if (index >= 0)
+      if (maxIndex >= 0)
       {
-        auto& tc = iTrackingContexts[index];
+        auto& tc = iTrackingContexts[maxIndex];
 
         if (IsRectInsideMat(roi, mat))
         {
@@ -276,15 +274,14 @@ class OpenCVTracker : public CTracker
 
     TrackingContext * AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& roi) override
     {
-      if (roi.x + roi.width > m.cols) return nullptr; //roi.width -= m.cols - roi.x;
-      if (roi.y + roi.height > m.rows) return nullptr; //roi.height -= m.rows - roi.y;
+      if (roi.x + roi.width > m.cols) return nullptr;
+      if (roi.y + roi.height > m.rows) return nullptr;
 
-      if ((roi.y < 12) || (roi.y > m.rows - 12))
+      if (roi.y < 12 || roi.y > (m.rows - 12))
       {
-        cv::rectangle(m, roi, cv::Scalar(255, 255, 255), 1, 1);
+        cv::rectangle(m, roi, cv::Scalar(255, 255, 255), 1, 1); //exclude near-to-frame detections, white
         return nullptr;
       }
-        
 
       TrackingContext tc;
 

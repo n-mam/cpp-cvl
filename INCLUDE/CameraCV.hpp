@@ -215,7 +215,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
            */
           auto detections = iDetector->Detect(frame);
           /*
-           * exclude detections which overlap with any tracker's context
+           * Match detections with a tracking context
            */
           for (auto& d : detections)
           {
@@ -232,6 +232,8 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
               tc->updateGender(std::get<2>(d));
             }
           }
+
+          
         }
 
         iTracker->RenderDisplacementAndPaths(frame);

@@ -199,7 +199,7 @@ class CTracker
         }
       }
     }
-    
+
     TrackingContext * MatchDetectionWithTrackingContextOld(cv::Rect2d& roi, cv::Mat& mat)
     {
       int maxArea = 0, maxIndex = -1;
@@ -249,7 +249,7 @@ class CTracker
     }
 
   protected:
-  
+
     std::string iType;
 
     SPCCounter iCounter;

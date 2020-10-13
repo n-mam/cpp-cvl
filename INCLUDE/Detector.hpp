@@ -201,7 +201,7 @@ class PeopleDetector : public CDetector
         CV_8U);*/
 
       iNetwork.setInput(inputBlob);
-      
+
       cv::Mat detection = iNetwork.forward();
 
       cv::Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
@@ -407,8 +407,9 @@ void FilterDetections(Detections& detections, cv::Mat& m)
       remove = true;
     }
 
+    //exclude near-to-frame detections, white
     if ((roi.y < 5) || ((roi.y + roi.height) > (m.rows - 5)))
-    { //exclude near-to-frame detections, white
+    { 
       cv::rectangle(m, roi, cv::Scalar(255, 255, 255), 1, 1); 
       remove =true;
     }

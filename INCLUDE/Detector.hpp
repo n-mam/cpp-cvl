@@ -11,7 +11,8 @@
 
 #include <CSubject.hpp>
 
-using Detections = std::vector<std::tuple<cv::Rect2d, float, float>>;
+using Detection = std::tuple<cv::Rect2d, float, float, bool>;
+using Detections = std::vector<Detection>;
 
 class CDetector : public NPL::CSubject<uint8_t, uint8_t>
 {
@@ -93,7 +94,8 @@ class AgeGenderDetector : public CDetector
         {
           cv::Rect2d(), 
           out[0].at<float>(0) * 100,
-          out[1].at<float>(1)
+          out[1].at<float>(1),
+          false
         }
       };
     }
@@ -159,7 +161,7 @@ class FaceDetector : public CDetector
               ag = iAgeGenderDetector->Detect(roi);
             }
 
-            out.emplace_back(rect, std::get<1>(ag[0]), std::get<2>(ag[0]));
+            out.emplace_back(rect, std::get<1>(ag[0]), std::get<2>(ag[0]), false);
           }
         }
       }
@@ -218,7 +220,7 @@ class PeopleDetector : public CDetector
           y2 = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
 
           out.emplace_back(
-            cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2)), -1.0f, -1.0f
+            cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2)), -1.0f, -1.0f, false
           );
         }
       }
@@ -280,7 +282,7 @@ class ObjectDetector : public CDetector
             y2 = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
 
             out.emplace_back(
-               cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2)), -1.0f, -1.0f
+               cv::Rect2d(cv::Point(x1, y1), cv::Point(x2, y2)), -1.0f, -1.0f, false
             );
           }
         }
@@ -374,7 +376,7 @@ class BackgroundSubtractor : public CDetector
           cv::putText(frame, std::to_string((int)(bb.width * bb.height)),
              cv::Point((int)bb.x, (int)(bb.y - 5)), cv::FONT_HERSHEY_SIMPLEX, 
              0.5, cv::Scalar(0, 0, 255), 1);
-          out.emplace_back(bb, -1.0f, -1.0f);
+          out.emplace_back(bb, -1.0f, -1.0f, false);
         }
       }
 

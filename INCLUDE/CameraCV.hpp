@@ -215,25 +215,26 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
            */
           auto detections = iDetector->Detect(frame);
           /*
-           * Match detections with a tracking context
+           * Match detections with the best tracking context
+           */
+          iTracker->MatchDetectionWithTrackingContext(detections, frame);
+          /*
+           * at this point every tracking context will potentially have a best match detection assigned
            */
           for (auto& d : detections)
           {
-            auto tc = iTracker->MatchDetectionWithTrackingContext(std::get<0>(d), frame);
-
-            if (tc == nullptr)
+            if (!std::get<3>(d))
             {
-              tc = iTracker->AddNewTrackingContext(frame, std::get<0>(d));
-            }
+              auto tc = iTracker->AddNewTrackingContext(frame, std::get<0>(d));
 
-            if (tc)
-            {
-              tc->updateAge(std::get<1>(d));
-              tc->updateGender(std::get<2>(d));
+              if (tc)
+              {
+                tc->updateAge(std::get<1>(d));
+                tc->updateGender(std::get<2>(d));
+              }
             }
           }
 
-          
         }
 
         iTracker->RenderDisplacementAndPaths(frame);

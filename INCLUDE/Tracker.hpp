@@ -10,11 +10,16 @@
 #include <Counter.hpp>
 #include <Geometry.hpp>
 
+using Detection = std::tuple<cv::Rect2d, float, float, bool>;
+using Detections = std::vector<Detection>;
+
 struct TrackingContext
 {
   cv::Ptr<cv::Tracker> iTracker;   // cv tracker
 
   std::vector<cv::Rect2d> iTrail;  // track bb trail
+
+  Detection *iMatch;
 
   std::vector<cv::Mat> iThumbnails;
 
@@ -149,7 +154,44 @@ class CTracker
       iCounter->DisplayRefLineAndCounts(m);
     }
 
-    TrackingContext * MatchDetectionWithTrackingContext(cv::Rect2d& roi, cv::Mat& mat)
+    void MatchDetectionWithTrackingContext(Detections& detections, cv::Mat& mat)
+    {
+      for (auto& t : iTrackingContexts) //for every tracking contexts
+      {
+        int maxArea = 0;
+        t.iMatch = nullptr;
+
+        for (auto& d : detections) //for each detection
+        {
+          auto& roi = std::get<0>(d);
+          auto& matched = std::get<3>(d);
+
+          if (!matched)
+          {
+            if (DoesRectOverlapRect(roi, t.iTrail.back()))
+            {
+              auto intersection = roi & t.iTrail.back();
+              auto area = intersection.width * intersection.width;
+
+              if (area > maxArea)
+              {
+                maxArea = area;
+                t.iMatch = &d;
+              }
+            }
+          }
+        }
+
+        if (t.iMatch)
+        {
+          std::get<3>(*(t.iMatch)) = true;
+          cv::rectangle(mat, std::get<0>(*(t.iMatch)), cv::Scalar(255, 0, 0 ), 1, 1);  // detection blue
+        }
+
+      }
+    }
+    
+    TrackingContext * MatchDetectionWithTrackingContextOld(cv::Rect2d& roi, cv::Mat& mat)
     {
       int maxArea = 0, maxIndex = -1;
 
@@ -251,7 +293,6 @@ class CTracker
 
         std::vector<uchar> thumb;
         cv::imencode(".jpg", tc.iThumbnails[tc.iThumbnails.size()/2], thumb);
-
         //cv::imwrite("some.jpg", tc.iThumbnails[tc.iThumbnails.size()/2]);
 
         iOnCameraEventCbk("trail", path, demography, thumb);
@@ -277,7 +318,7 @@ class OpenCVTracker : public CTracker
       if (roi.x + roi.width > m.cols) return nullptr;
       if (roi.y + roi.height > m.rows) return nullptr;
 
-      if (roi.y < 12 || roi.y > (m.rows - 12))
+      if ((roi.y < 5) || ((roi.y + roi.height) > (m.rows - 5)))
       {
         cv::rectangle(m, roi, cv::Scalar(255, 255, 255), 1, 1); //exclude near-to-frame detections, white
         return nullptr;

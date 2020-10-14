@@ -17,20 +17,19 @@ struct TrackingContext
 {
   int id;
 
+  Detection *iMatch;
+
+  std::vector<float> iAge;
+
+  std::vector<std::string> iGender;
+  float _maleScore = 0;
+  float _femaleScore = 0;
+
   cv::Ptr<cv::Tracker> iTracker;   // cv tracker
 
   std::vector<cv::Rect2d> iTrail;  // track bb trail
 
-  Detection *iMatch;
-
   std::vector<cv::Mat> iThumbnails;
-
-  std::vector<float> iAge;
-
-  float _maleScore = 0;
-  float _femaleScore = 0;
-
-  std::vector<std::string> iGender;
 
   bool iSkip = false;
 
@@ -79,7 +78,6 @@ struct TrackingContext
   {
     return _maleScore > _femaleScore;
   }
-
 };
 
 using TCbkTracker = std::function<bool (const TrackingContext&)>;
@@ -129,18 +127,17 @@ class CTracker
          */
         for (size_t i = 1; i < tc.iTrail.size() - 1; i++)
         {
-          auto f = GetRectCenter(tc.iTrail[i]);
-          auto b = GetRectCenter(tc.iTrail[i-1]);
+          auto&& f = GetRectCenter(tc.iTrail[i]);
+          auto&& b = GetRectCenter(tc.iTrail[i-1]);
           cv::line(m, f, b, cv::Scalar(0, 255, 0), 1);
         }
 
         auto& bb = tc.iTrail.back();
 
         if (tc.iAge.size()) {
-          auto ag = (tc.isMale() ? std::string("M") : std::string("F")) + ":" + std::to_string(tc.getAge());
-          cv::putText(m, ag,
-               cv::Point((int)bb.x, (int)(bb.y - 5)), cv::FONT_HERSHEY_SIMPLEX, 
-               0.4, cv::Scalar(255, 255, 255), 1);
+          auto&& ag = (tc.isMale() ? std::string("M") : std::string("F")) + ":" + std::to_string(tc.getAge());
+          cv::putText(m, ag, cv::Point((int)bb.x, (int)(bb.y - 5)), 
+             cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 255, 255), 1);
         }
 
         cv::rectangle(m, bb, cv::Scalar(0, 0, 255), 1, 1); //tracking red
@@ -148,8 +145,8 @@ class CTracker
 
       for (auto& pc : iPurgedContexts)
       {
-        auto first = GetRectCenter(pc.iTrail.front());
-        auto last = GetRectCenter(pc.iTrail.back());
+        auto&& first = GetRectCenter(pc.iTrail.front());
+        auto&& last = GetRectCenter(pc.iTrail.back());
         cv::line(m, first, last, cv::Scalar(0, 255, 255), 1);
       }
 
@@ -250,11 +247,11 @@ class CTracker
 
   protected:
 
+    size_t iCount = 0;
+
     std::string iType;
 
     SPCCounter iCounter;
-
-    size_t iCount = 0;
 
     TOnCameraEventCbk iOnCameraEventCbk = nullptr;
 

@@ -413,18 +413,6 @@ void FilterDetections(Detections& detections, cv::Mat& m)
       cv::rectangle(m, roi, cv::Scalar(255, 255, 255), 1, 1); 
       remove =true;
     }
-    //overlapping detections
-    for (auto& d : detections)
-    {
-      if (std::get<0>(d) != roi)
-      {
-        if ((roi & std::get<0>(d)).area())
-        {
-          remove = true;
-          break;
-        }
-      }
-    }
 
     if (remove)
     {

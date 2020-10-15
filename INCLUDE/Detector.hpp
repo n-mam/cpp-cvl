@@ -246,12 +246,8 @@ class ObjectDetector : public CDetector
     {
       Detections out;
 
-      cv::Mat resized;
-
-      cv::resize(frame, resized, cv::Size(300, 300));
-
       cv::Mat inputBlob = cv::dnn::blobFromImage(
-        resized,
+        frame,
         0.007843f,
         cv::Size(300, 300),
         cv::Scalar(127.5, 127.5, 127.5),
@@ -409,7 +405,7 @@ void FilterDetections(Detections& detections, cv::Mat& m)
 
     //exclude near-to-frame detections, white
     if ((roi.y < 5) || ((roi.y + roi.height) > (m.rows - 5)))
-    { 
+    {
       cv::rectangle(m, roi, cv::Scalar(255, 255, 255), 1, 1); 
       remove =true;
     }

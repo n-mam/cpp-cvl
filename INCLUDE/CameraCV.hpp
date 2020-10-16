@@ -221,7 +221,8 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
            */
           iTracker->MatchDetectionWithTrackingContext(detections, frame);
           /*
-           * at this point every tracking context will potentially have a best match detection assigned
+           * at this point every tracking context will potentially have 
+           * a best match detection assigned. Add everything else to tracking
            */
           for (auto& d : detections)
           {

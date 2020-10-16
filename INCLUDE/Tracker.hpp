@@ -323,6 +323,11 @@ class OpenCVTracker : public CTracker
 
     TrackingContext * AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& roi) override
     {
+      for (auto& tc : iTrackingContexts)
+      {
+        if ((roi & tc.iTrail.back()).area()) return nullptr;
+      }
+
       TrackingContext tc;
       tc.id = iCount++;
 
@@ -334,6 +339,8 @@ class OpenCVTracker : public CTracker
       tc.iTrail.push_back(roi);
 
       tc.iTracker->init(m, roi);
+
+      cv::rectangle(m, roi, cv::Scalar(0, 0, 0 ), 2, 1);  // 
 
       iTrackingContexts.push_back(tc);
 

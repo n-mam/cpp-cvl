@@ -1,16 +1,17 @@
 project (cpp-cvl)
 
-# set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 # SET OPENCV_DIR=C:/opencv/build/install
 # SET OPENSSL_ROOT_DIR=C:/vcpkg/installed/x64-windows
 
 find_package(Threads REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(OpenSSL REQUIRED)
+find_package(InferenceEngine 2.0 REQUIRED)
 
 ADD_EXECUTABLE(TestCVL Test.cpp)
 
-macro(ie_add_sample)
+macro(ie_add_sample_cvl)
     set(options EXCLUDE_CPPLINT)
     set(oneValueArgs NAME)
     set(multiValueArgs SOURCES HEADERS DEPENDENCIES OPENCV_DEPENDENCIES INCLUDE_DIRECTORIES)
@@ -48,7 +49,7 @@ macro(ie_add_sample)
     target_include_directories(${IE_SAMPLE_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../common")
 
     target_link_libraries(${IE_SAMPLE_NAME} PRIVATE ${OpenCV_LIBRARIES} ${InferenceEngine_LIBRARIES}
-                                                    ${IE_SAMPLE_DEPENDENCIES} gflags)
+                                                    ${IE_SAMPLE_DEPENDENCIES} )
 
     if(UNIX)
         target_link_libraries(${IE_SAMPLE_NAME} PRIVATE pthread)
@@ -65,8 +66,9 @@ macro(ie_add_sample)
     endif()
 endmacro()
 
-ie_add_sample(NAME IETest
-              SOURCES Test2.cpp)
+ie_add_sample_cvl(
+    NAME IETest
+    SOURCES Test2.cpp)
 
 SET_PROPERTY(TARGET TestCVL PROPERTY CXX_STANDARD 17)
 
@@ -94,14 +96,3 @@ TARGET_LINK_LIBRARIES(
   ${CMAKE_THREAD_LIBS_INIT} 
   OpenSSL::SSL
 )
-
-
-
-if(OPENVINO)
- TARGET_LINK_LIBRARIES(
-  TestCVL
-  fd
-  pt
-  fr
- )
-endif (OPENVINO)

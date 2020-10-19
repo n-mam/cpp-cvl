@@ -10,9 +10,7 @@ find_package(OpenSSL REQUIRED)
 
 ADD_EXECUTABLE(TestCVL Test.cpp)
 
-if(OPENVINO)
- find_package(ngraph)
- macro(ovl_add_sample)
+macro(ie_add_sample)
     set(options EXCLUDE_CPPLINT)
     set(oneValueArgs NAME)
     set(multiValueArgs SOURCES HEADERS DEPENDENCIES OPENCV_DEPENDENCIES INCLUDE_DIRECTORIES)
@@ -38,7 +36,7 @@ if(OPENVINO)
     endif()
 
     # Create executable file from sources
-    add_library(${IE_SAMPLE_NAME} SHARED ${IE_SAMPLE_SOURCES} ${IE_SAMPLE_HEADERS})
+    add_executable(${IE_SAMPLE_NAME} ${IE_SAMPLE_SOURCES} ${IE_SAMPLE_HEADERS})
 
     if(WIN32)
         set_target_properties(${IE_SAMPLE_NAME} PROPERTIES COMPILE_PDB_NAME ${IE_SAMPLE_NAME})
@@ -47,7 +45,7 @@ if(OPENVINO)
     if(IE_SAMPLE_INCLUDE_DIRECTORIES)
         target_include_directories(${IE_SAMPLE_NAME} PRIVATE ${IE_SAMPLE_INCLUDE_DIRECTORIES})
     endif()
-    target_include_directories(${IE_SAMPLE_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../common")
+    target_include_directories(${IE_SAMPLE_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../common")
 
     target_link_libraries(${IE_SAMPLE_NAME} PRIVATE ${OpenCV_LIBRARIES} ${InferenceEngine_LIBRARIES}
                                                     ${IE_SAMPLE_DEPENDENCIES} gflags)
@@ -65,13 +63,10 @@ if(OPENVINO)
     if(COMMAND add_cpplint_target AND NOT IE_SAMPLE_EXCLUDE_CPPLINT)
         add_cpplint_target(${IE_SAMPLE_NAME}_cpplint FOR_TARGETS ${IE_SAMPLE_NAME})
     endif()
- endmacro()
+endmacro()
 
- add_subdirectory(fd)
- add_subdirectory(pt)
- add_subdirectory(fr)
- target_compile_definitions(TestCVL PUBLIC OPENVINO)
-endif (OPENVINO)
+ie_add_sample(NAME IETest
+              SOURCES Test2.cpp)
 
 SET_PROPERTY(TARGET TestCVL PROPERTY CXX_STANDARD 17)
 
@@ -99,6 +94,8 @@ TARGET_LINK_LIBRARIES(
   ${CMAKE_THREAD_LIBS_INIT} 
   OpenSSL::SSL
 )
+
+
 
 if(OPENVINO)
  TARGET_LINK_LIBRARIES(

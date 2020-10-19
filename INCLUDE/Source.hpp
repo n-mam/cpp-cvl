@@ -95,7 +95,7 @@ class CSource
     {
       bool fRet = true;
 
-      int c = cv::waitKey(15);
+      int c = cv::waitKey(1);
 
       if(c >= 0)
       {

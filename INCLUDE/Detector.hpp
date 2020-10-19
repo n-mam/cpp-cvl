@@ -57,7 +57,7 @@ class CDetector : public NPL::CSubject<uint8_t, uint8_t>
     }
 
     virtual ~CDetector() {}
- 
+
     virtual Detections Detect(cv::Mat& frame) = 0;
 
   protected:
@@ -389,6 +389,23 @@ class BackgroundSubtractor : public CDetector
     cv::Ptr<cv::BackgroundSubtractor> pBackgroundSubtractor = nullptr;
 
 };
+
+class IEDetector : public CDetector
+{
+  public:
+
+    IEDetector()
+    {
+
+    }
+
+    virtual Detections Detect(cv::Mat& frame) override
+    {
+      
+    }
+
+};
+
 
 void FilterDetections(Detections& detections, cv::Mat& m)
 {

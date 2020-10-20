@@ -125,7 +125,7 @@ class CTracker
         /*
          * Path
          */
-        for (size_t i = 1; i < tc.iTrail.size() - 1; i++)
+        for (size_t i = 1; i < tc.iTrail.size() - 1; ++i)
         {
           auto&& f = GetRectCenter(tc.iTrail[i]);
           auto&& b = GetRectCenter(tc.iTrail[i-1]);
@@ -201,7 +201,7 @@ class CTracker
     {
       int maxArea = 0, maxIndex = -1;
 
-      for (int i = 0; i < iTrackingContexts.size(); i++)
+      for (int i = 0; i < iTrackingContexts.size(); ++i)
       {
         auto& tc = iTrackingContexts[i];
 
@@ -284,7 +284,7 @@ class CTracker
 
         std::string demography;
 
-        for (int i = 0; i < tc.iAge.size(); i++)
+        for (int i = 0; i < tc.iAge.size(); ++i)
         {
           if (demography.size())
           {
@@ -332,7 +332,9 @@ class OpenCVTracker : public CTracker
       tc.id = iCount++;
 
       cv::TrackerCSRT::Params params;
-      params.psr_threshold = 0.04f;
+      params.psr_threshold = 0.04f; //0.035f; 
+      //param.template_size = 150;
+      //param.admm_iterations = 3;
 
       tc.iTracker = cv::TrackerCSRT::create(params);
 

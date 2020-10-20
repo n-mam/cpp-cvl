@@ -138,7 +138,7 @@ class FaceDetector : public CDetector
 
       cv::Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
 
-      for (int i = 0; i < detectionMat.rows; i++)
+      for (int i = 0; i < detectionMat.rows; ++i)
       {
         float confidence = detectionMat.at<float>(i, 2);
 
@@ -207,7 +207,7 @@ class PeopleDetector : public CDetector
 
       cv::Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
 
-      for (int i = 0; i < detectionMat.rows; i++)
+      for (int i = 0; i < detectionMat.rows; ++i)
       {
         float confidence = detectionMat.at<float>(i, 2);
 
@@ -261,7 +261,7 @@ class ObjectDetector : public CDetector
 
       cv::Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
 
-      for (int i = 0; i < detectionMat.rows; i++)
+      for (int i = 0; i < detectionMat.rows; ++i)
       {
         float confidence = detectionMat.at<float>(i, 2);
 
@@ -340,7 +340,7 @@ class BackgroundSubtractor : public CDetector
       auto areaThreshold = GetPropertyAsInt("bbarea");
       auto excludeHBB = GetPropertyAsInt("exhzbb");
 
-      for (size_t i = 0; i < contours.size(); i++) 
+      for (size_t i = 0; i < contours.size(); ++i) 
       {
         if (cv::contourArea(contours[i]) < areaThreshold)
         {
@@ -356,7 +356,7 @@ class BackgroundSubtractor : public CDetector
 
         bool skip = false;
 
-        for (size_t j = 0; j < contours.size(); j++)
+        for (size_t j = 0; j < contours.size(); ++j)
         {
           if (DoesRectOverlapRect(bb, cv::boundingRect(contours[j])))
           {
@@ -451,7 +451,7 @@ class IEDetector : public CDetector
       auto height_ = static_cast<float>(frame.rows);
 
       InferenceEngine::Blob::Ptr blob = wrapMat2Blob(frame);
-  
+
       req.SetBlob(iInputDataMap.begin()->first, blob); 
 
       req.Infer();

@@ -9,8 +9,6 @@ find_package(OpenCV REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(InferenceEngine 2.0 REQUIRED)
 
-ADD_EXECUTABLE(TestCVL Test.cpp)
-
 macro(ie_add_sample_cvl)
     set(options EXCLUDE_CPPLINT)
     set(oneValueArgs NAME)
@@ -67,6 +65,10 @@ macro(ie_add_sample_cvl)
 endmacro()
 
 ie_add_sample_cvl(
+    NAME TestCVL
+    SOURCES Test.cpp)
+
+ie_add_sample_cvl(
     NAME IETest
     SOURCES Test2.cpp)
 
@@ -88,11 +90,4 @@ TARGET_INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR}/INCLUDE
   ${CMAKE_CURRENT_SOURCE_DIR}/../cpp-npl
   ${CMAKE_CURRENT_SOURCE_DIR}/../cpp-npl/INCLUDE
-)
-
-TARGET_LINK_LIBRARIES(
-  TestCVL
-  ${OpenCV_LIBS} 
-  ${CMAKE_THREAD_LIBS_INIT} 
-  OpenSSL::SSL
 )

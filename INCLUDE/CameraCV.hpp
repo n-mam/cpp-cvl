@@ -36,7 +36,11 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
         iSource = std::make_shared<CSource>(source);
       }
 
-      if (target == "people")
+      if (0)
+      {
+        iDetector = std::make_shared<IEDetector>(target);
+      }
+      else if (target == "people")
       {
         iDetector = std::make_shared<PeopleDetector>();
       }

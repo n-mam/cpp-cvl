@@ -342,7 +342,7 @@ class OpenCVTracker : public CTracker
 
       tc.iTracker->init(m, roi);
 
-      cv::rectangle(m, roi, cv::Scalar(0, 0, 0 ), 2, 1);  // 
+      cv::rectangle(m, roi, cv::Scalar(0, 0, 0 ), 2, 1);  // white
 
       iTrackingContexts.push_back(tc);
 

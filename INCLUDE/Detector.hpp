@@ -545,7 +545,6 @@ class IEDetector : public CDetector
     }
 };
 
-
 void FilterDetections(Detections& detections, cv::Mat& m)
 {
   for (auto& it = detections.begin(); it != detections.end(); )
@@ -559,7 +558,7 @@ void FilterDetections(Detections& detections, cv::Mat& m)
       remove = true;
     }
 
-    //exclude near-to-frame detections, white
+    //exclude near-to-frame detections, mark white
     if ((roi.y < 5) || ((roi.y + roi.height) > (m.rows - 5)))
     {
       cv::rectangle(m, roi, cv::Scalar(255, 255, 255), 1, 1); 

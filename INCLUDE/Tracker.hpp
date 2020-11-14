@@ -60,9 +60,13 @@ struct TrackingContext
   {
     if (value < 0)
       return;
-    if (value > 0.5) {
+
+    if (value > 0.5) 
+    {
       _maleScore += value - 0.5f;
-    } else {
+    }
+    else
+    {
       _femaleScore += 0.5f - value;
     }
 
@@ -195,45 +199,6 @@ class CTracker
                cv::Scalar(255, 0, 0 ), 1, 1);  // detection blue
         }
       }
-    }
-
-    TrackingContext * MatchDetectionWithTrackingContextOld(cv::Rect2d& roi, cv::Mat& mat)
-    {
-      int maxArea = 0, maxIndex = -1;
-
-      for (int i = 0; i < iTrackingContexts.size(); ++i)
-      {
-        auto& tc = iTrackingContexts[i];
-
-        if (DoesRectOverlapRect(roi, tc.iTrail.back()))
-        {
-          auto intersection = roi & tc.iTrail.back();
-
-          auto area = intersection.width * intersection.width;
-
-          if (area > maxArea)
-          {
-            maxArea = area;
-            maxIndex = i;
-          }
-        }
-      }
-
-      if (maxIndex >= 0)
-      {
-        auto& tc = iTrackingContexts[maxIndex];
-
-        if (IsRectInsideMat(roi, mat))
-        {
-          tc.iThumbnails.push_back(mat(roi).clone());
-        }
-
-        cv::rectangle(mat, roi, cv::Scalar(255, 0, 0 ), 1, 1);  // detection blue
-
-        return &tc;
-      }
-
-      return nullptr;
     }
 
     virtual TrackingContext * AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& r) { return nullptr; }

@@ -81,6 +81,8 @@
         "xlocmes": "cpp",
         "*.ipp": "cpp",
         "random": "cpp",
-        "resumable": "cpp"
+        "resumable": "cpp",
+        "any": "cpp",
+        "filesystem": "cpp"
     }
 }

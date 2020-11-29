@@ -3,17 +3,15 @@
 
 #include <tuple>
 #include <string>
+#include <filesystem>
 
-#include <opencv2/opencv.hpp>
 #include <opencv2/dnn.hpp>
-
 #include <opencv2/bgsegm.hpp>
 #include <inference_engine.hpp>
 
-#include <CSubject.hpp>
+#include <Geometry.hpp>
 
-using Detection = std::tuple<cv::Rect2d, float, float, bool>;
-using Detections = std::vector<Detection>;
+#include <CSubject.hpp>
 
 class CDetector : public NPL::CSubject<uint8_t, uint8_t>
 {
@@ -101,8 +99,6 @@ class AgeGenderDetector : public CDetector
       };
     }
 
-  public:
-
   protected:
 
 };
@@ -119,6 +115,8 @@ class FaceDetector : public CDetector
     {
       iAgeGenderDetector = std::make_shared<AgeGenderDetector>();
     }
+
+    ~FaceDetector() {}
 
     virtual Detections Detect(cv::Mat& frame) override
     {
@@ -170,10 +168,64 @@ class FaceDetector : public CDetector
       return out;
     }
 
+    virtual void OnEvent(std::any e)
+    {
+      auto tc = std::any_cast<
+                  std::reference_wrapper<TrackingContext>>(e).get();
+
+      if (tc.iThumbnails.size())
+      {
+        auto out = std::make_tuple(
+           std::string(),
+           std::string(),
+           std::vector<uchar>(),
+           std::ref(tc));
+
+        auto& path = std::get<0>(out);
+        auto& demography = std::get<1>(out);
+        auto& thumb = std::get<2>(out);
+
+        for (auto& r : tc.iTrail)
+        {
+          auto p = GetRectCenter(r);
+
+          if (path.size())
+          {
+            path += ", ";
+          }
+
+          path += std::to_string(p.x) + " " + std::to_string(p.y);
+        }
+
+        if (tc.iAge.size() != tc.iGender.size()) 
+        {
+          throw std::exception("age-gender size mismatch");
+        }
+
+        for (int i = 0; i < tc.iAge.size(); ++i)
+        {
+          if (demography.size())
+          {
+            demography += ", ";
+          }
+
+          demography += std::to_string((int)tc.iAge[i]) + " " + tc.iGender[i];         
+        }
+
+        if (demography.size())
+        {
+          demography += std::string(", ") + std::to_string(tc.getAge()) + std::string(" ") + (tc.isMale() ? std::string("M") : std::string("F"));
+        }
+
+        cv::imencode(".jpg", tc.iThumbnails[tc.iThumbnails.size() / 2], thumb);
+
+        CSubject<uint8_t, uint8_t>::OnEvent(std::ref(out));
+      }
+    }
+
   protected:
 
     SPAgeGenderDetector iAgeGenderDetector = nullptr;
-
 };
 
 class PeopleDetector : public CDetector
@@ -213,7 +265,7 @@ class PeopleDetector : public CDetector
 
         if (confidence > 0.7)
         {
-          int idx, x1, y1, x2, y2;
+          int x1, y1, x2, y2;
 
           x1 = static_cast<int>(detectionMat.at<float>(i, 3) * frame.cols);
           y1 = static_cast<int>(detectionMat.at<float>(i, 4) * frame.rows);
@@ -575,4 +627,5 @@ void FilterDetections(Detections& detections, cv::Mat& m)
     }
   }
 }
+
 #endif

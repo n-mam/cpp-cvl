@@ -7,8 +7,6 @@
 #include <future>
 #include <functional>
 
-using TOnCameraEventCbk = std::function<void (const std::string&, const std::string&, const std::string&, std::vector<uint8_t>&)>;
-
 #include <Source.hpp>
 #include <Tracker.hpp>
 #include <Detector.hpp>
@@ -16,11 +14,13 @@ using TOnCameraEventCbk = std::function<void (const std::string&, const std::str
 
 #include <CSubject.hpp>
 
+#include <opencv2/face/facerec.hpp>
+
 class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 {
   public:
 
-    CCamera(const std::string& source, const std::string& target, const std::string& algo, const std::string& tracker)
+    CCamera(const std::string& source, const std::string& target, const std::string& algo)
     {
       SetProperty("skipcount", "0");
 
@@ -47,6 +47,8 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       else if (target == "face")
       {
         iDetector = std::make_shared<FaceDetector>();
+
+        iFRModel = cv::face::LBPHFaceRecognizer::create();
       }
       else if (target == "mocap")
       {
@@ -57,7 +59,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
         iDetector = std::make_shared<ObjectDetector>(target);
       }
 
-      iTracker = std::make_shared<OpenCVTracker>(tracker);
+      iTracker = std::make_shared<CTracker>();
     }
 
     ~CCamera()
@@ -67,50 +69,35 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
     void Start(TOnCameraEventCbk cbk = nullptr)
     {
-      if (!iSource->isOpened())
+      if (iSource->isOpened())
       {
-        std::cout << "Error opening video stream\n";
-        return;
+        SetProperty("stop", "false");
+	      SetProperty("pause", "false");
+
+        iOnCameraEventCbk = cbk;
+
+        iTracker->AddEventListener(iDetector)->AddEventListener(shared_from_this());
+
+        iRunThread = std::thread(&CCamera::Run, this);
       }
-
-      iStop = false;
-
-	    iPaused = false;
-
-      iOnCameraEventCbk = cbk;
-
-      iTracker->SetEventCallback(cbk);
-
-      iRunThread = std::thread(&CCamera::Run, this);
+      else
+      {
+        std::cout << "Camera source not opened\n";
+      }
     }
 
     void Stop(void)
     {
-      iStop = true;
+      SetProperty("stop", "true");
 
-      if (iRunThread.joinable())
+      if (IsStarted())
       {
         iRunThread.join();
       }
-    }
 
-    void Play(void)
-    {
-      std::lock_guard<std::mutex> lg(iLock);
-      iPlay = true;
-      iPaused = false;
-    }
-
-    void Pause(void)
-    {
-      std::lock_guard<std::mutex> lg(iLock);
-      iPaused = true;
-    }
-
-    void StopPlay(void)
-    {
-      std::lock_guard<std::mutex> lg(iLock);
-      iPlay = false;
+      iTracker->RemoveAllEventListeners();
+      iDetector->RemoveAllEventListeners();
+      RemoveAllEventListeners();
     }
 
     void Forward(void)
@@ -129,10 +116,68 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       return iRunThread.joinable() ? true : false;
     }
 
-    bool IsPaused()
+    virtual void UpdateFRModel(TrackingContext& tc) 
     {
-      std::lock_guard<std::mutex> lg(iLock);
-      return iPaused;
+        std::vector<cv::Mat> gray;
+
+        for (auto& m : tc.iThumbnails)
+        {
+          cv::Mat g;
+          cv::cvtColor(m, g, cv::COLOR_BGR2GRAY);
+          gray.push_back(g);
+        }
+
+        cv::imwrite(std::to_string(tc.id) + "_.jpg", gray[gray.size()/2]);
+
+        if (!iTrained)
+        {
+          iFRModel->train(gray, std::vector<int>(gray.size(), tc.id));
+          iTrained = true;
+        }
+
+        int predictedLabel = -1;
+        double confidence = 0.0;
+
+        iFRModel->predict(gray[gray.size() / 2], predictedLabel, confidence);
+
+        if (confidence <= 20)
+        {
+          std::cout << "FR match : predicted label : " << predictedLabel << ", confidence " << confidence << "\n";
+        }
+        else
+        {
+          std::cout << "FR update : predicted label : " << predictedLabel << ", confidence " << confidence << ", id " << tc.id << "\n";
+          iFRModel->update(gray, std::vector<int>(gray.size(), tc.id));
+        }
+    }
+
+    virtual void OnEvent(std::any e)
+    {
+      auto in = std::any_cast<
+        std::reference_wrapper<
+          std::tuple<
+            std::string,
+            std::string,
+            std::vector<uchar>,
+            std::reference_wrapper<TrackingContext>
+          >
+        >>(e).get();
+
+      iOnCameraEventCbk(
+        "trail",
+        std::get<0>(in), //path
+        std::get<1>(in), //demography
+        std::get<2>(in)  //thumbnail
+      );
+
+      if (iFRModel)
+      {
+        UpdateFRModel(
+          std::any_cast<
+            std::reference_wrapper<TrackingContext>
+          >(std::get<3>(in)).get()
+        );
+      }
     }
 
     virtual void SetProperty(const std::string& key, const std::string& value) override
@@ -162,7 +207,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       CSubject<uint8_t, uint8_t>::SetProperty(key, value);
     }
 
-    std::string GetProperty(const std::string& key)
+    std::string GetProperty(const std::string& key) override
     {
       if (key == "bbarea" ||
           key == "exhzbb")
@@ -179,7 +224,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
       DWORD startTime = GetTickCount();
 
-      while (!iStop)
+      while (!GetPropertyAsBool("stop"))
       {
         if (!iSource->Read(frame))
 	      {
@@ -211,7 +256,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
         if ((iSource->GetCurrentOffset() % (skipcount + 1)) == 0)
         { /*
-           * update all active trackers first
+           * update all active trackers
            */
           auto updates = iTracker->UpdateTrackingContexts(frame);
           /*
@@ -226,7 +271,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
           iTracker->MatchDetectionWithTrackingContext(detections, frame);
           /*
            * at this point every tracking context will potentially have 
-           * a best match detection assigned. Add everything else to tracking
+           * a best match detection assigned. Add remaining detections to tracking
            */
           for (auto& d : detections)
           {
@@ -251,25 +296,25 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
           auto fps = (float) iSource->GetCurrentOffset() / (float)((GetTickCount() - startTime) / 1000);
           cv::putText(frame, "FPS : " + std::to_string(fps), cv::Point(5, 10), 
                  cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 255, 255), 1);
+        }
 
-          if (iPlay)
+        if (GetPropertyAsBool("play"))
+        {
+          std::vector<uchar> buf;
+          cv::imencode(".jpg", frame, buf);
+          iOnCameraEventCbk("play", "", "", buf);
+        }
+        else
+        {
+          if (GetName() == "TESTCV")
           {
-            std::vector<uchar> buf;
-            cv::imencode(".jpg", frame, buf);
-            iOnCameraEventCbk("play", "", "", buf);
-          }
-          else
-          {
-            if (GetName() == "CV")
-            {
-              cv::imshow(this->GetName().c_str(), frame);
-            }
+            cv::imshow(this->GetName().c_str(), frame);
           }
         }
 
         if (!iSource->HandleUserInput(iTracker)) break;
 
-        while (iPaused && !iStop)
+        while (GetPropertyAsBool("pause") && !GetPropertyAsBool("stop"))
         {
           std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
@@ -283,12 +328,6 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
   protected:
 
-    bool iStop = false;
-
-    bool iPlay = false;
-
-    bool iPaused = false;
-
     std::thread iRunThread;
 
     SPCSource   iSource;
@@ -297,7 +336,11 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
     SPCDetector iDetector;
 
-    TOnCameraEventCbk iOnCameraEventCbk = nullptr;    
+    bool iTrained = false;
+
+    cv::Ptr<cv::face::LBPHFaceRecognizer> iFRModel = nullptr;
+
+    TOnCameraEventCbk iOnCameraEventCbk = nullptr;
 };
 
 using SPCCamera = std::shared_ptr<CCamera>;

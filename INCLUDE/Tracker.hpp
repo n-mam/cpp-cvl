@@ -10,89 +10,14 @@
 #include <Counter.hpp>
 #include <Geometry.hpp>
 
-using Detection = std::tuple<cv::Rect2d, float, float, bool>;
-using Detections = std::vector<Detection>;
+#include <CSubject.hpp>
 
-struct TrackingContext
-{
-  int id;
-
-  Detection *iMatch;
-
-  std::vector<float> iAge;
-
-  std::vector<std::string> iGender;
-  float _maleScore = 0;
-  float _femaleScore = 0;
-
-  cv::Ptr<cv::Tracker> iTracker;   // cv tracker
-
-  std::vector<cv::Rect2d> iTrail;  // track bb trail
-
-  std::vector<cv::Mat> iThumbnails;
-
-  bool iSkip = false;
-
-  bool IsFrozen(void)
-  {/*
-    * valid only for FOV where the subject is 
-    * moving eithe top-down or left to right
-    */
-    if (iTrail.size() >= 8)
-    {
-      auto& last = iTrail[iTrail.size() - 1];
-      auto& prev = iTrail[iTrail.size() - 8];
-      auto d = Distance(GetRectCenter(last), GetRectCenter(prev));
-      if (d <= 2) return true;
-    }
-    return false;
-  }
-
-  void updateAge(float value)
-  {
-    if (value < 0)
-      return;
-    float _age = (iAge.size() == 0) ? value : 0.95f * iAge.back() + 0.05f * value;
-    iAge.push_back(_age);
-  }
-
-  void updateGender(float value) 
-  {
-    if (value < 0)
-      return;
-
-    if (value > 0.5) 
-    {
-      _maleScore += value - 0.5f;
-    }
-    else
-    {
-      _femaleScore += 0.5f - value;
-    }
-
-    iGender.push_back(isMale() ? "M" : "F");
-  }
-
-  int getAge() 
-  {
-    return static_cast<int>(std::floor(iAge.back() + 0.5f));
-  }
-
-  bool isMale() 
-  {
-    return _maleScore > _femaleScore;
-  }
-};
-
-using TCbkTracker = std::function<bool (const TrackingContext&)>;
-
-class CTracker
+class CTracker : public NPL::CSubject<uint8_t, uint8_t>
 {
   public:
 
-    CTracker(const std::string& tracker)
+    CTracker()
     {
-      iType = tracker;
       iCounter = std::make_shared<CCounter>();
     }
 
@@ -107,17 +32,17 @@ class CTracker
       iCounter.reset(new CCounter());
     }
 
-    void SetRefLine(int orientation, int delta)
-    {
-      iCounter->SetRefLine(orientation, delta);
-    }
-
     size_t GetContextCount(void)
     {
       return iTrackingContexts.size();
     }
 
-    void RenderDisplacementAndPaths(cv::Mat& m, bool isTest = true)
+    void SetRefLine(int orientation, int delta)
+    {
+      iCounter->SetRefLine(orientation, delta);
+    }
+
+    virtual void RenderDisplacementAndPaths(cv::Mat& m, bool isTest = true)
     {
       for (auto& tc : iTrackingContexts)
       { /*
@@ -157,7 +82,7 @@ class CTracker
       if (isTest) iCounter->DisplayRefLineAndCounts(m);
     }
 
-    void MatchDetectionWithTrackingContext(Detections& detections, cv::Mat& mat)
+    virtual void MatchDetectionWithTrackingContext(Detections& detections, cv::Mat& mat)
     {
       for (auto& t : iTrackingContexts)
       {
@@ -201,92 +126,7 @@ class CTracker
       }
     }
 
-    virtual TrackingContext * AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& r) { return nullptr; }
-
-    virtual std::vector<cv::Rect2d> UpdateTrackingContexts(cv::Mat& frame) { return {}; }
-
-    virtual void SetEventCallback(TOnCameraEventCbk cbk)
-    {
-      iOnCameraEventCbk = cbk;
-    }
-
-  protected:
-
-    size_t iCount = 0;
-
-    std::string iType;
-
-    SPCCounter iCounter;
-
-    TOnCameraEventCbk iOnCameraEventCbk = nullptr;
-
-    std::vector<TrackingContext> iTrackingContexts;
-
-    std::vector<TrackingContext> iPurgedContexts;
-
-    virtual void PurgeAndSaveTrackingContext(TrackingContext& tc)
-    {
-      if (iOnCameraEventCbk && tc.iThumbnails.size())
-      {
-        std::string path;
-
-        for (auto& r : tc.iTrail)
-        {
-          auto p = GetRectCenter(r);
-
-          if (path.size())
-          {
-            path += ", ";
-          }
-
-          path += std::to_string(p.x) + " " + std::to_string(p.y);
-        }
-
-        if (tc.iAge.size() != tc.iGender.size()) 
-        {
-          throw std::exception("age-gender size mismatch");
-        }
-
-        std::string demography;
-
-        for (int i = 0; i < tc.iAge.size(); ++i)
-        {
-          if (demography.size())
-          {
-            demography += ", ";
-          }
-
-          demography += std::to_string((int)tc.iAge[i]) + " " + tc.iGender[i];         
-        }
-
-        if (demography.size())
-        {
-          demography += std::string(", ") + std::to_string(tc.getAge()) + std::string(" ") + (tc.isMale() ? std::string("M") : std::string("F"));
-        }
-
-        std::vector<uchar> thumb;
-        cv::imencode(".jpg", tc.iThumbnails[tc.iThumbnails.size()/2], thumb);
-        //cv::imwrite("some.jpg", tc.iThumbnails[tc.iThumbnails.size()/2]);
-
-        iOnCameraEventCbk("trail", path, demography, thumb);
-      }
-
-      if (iPurgedContexts.size() > 20)
-      {
-        iPurgedContexts.clear();
-      }
-
-      iPurgedContexts.push_back(tc);
-    }
-};
-
-class OpenCVTracker : public CTracker
-{
-  public:
-
-    OpenCVTracker(const std::string& tracker) : CTracker(tracker) {}
-
-    TrackingContext * AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& roi) override
+    virtual TrackingContext * AddNewTrackingContext(const cv::Mat& m, cv::Rect2d& roi)
     {
       for (auto& tc : iTrackingContexts)
       {
@@ -314,7 +154,7 @@ class OpenCVTracker : public CTracker
       return &(iTrackingContexts.back());
     }
 
-    std::vector<cv::Rect2d> UpdateTrackingContexts(cv::Mat& m) override
+    virtual std::vector<cv::Rect2d> UpdateTrackingContexts(cv::Mat& frame)
     {
       if (!iTrackingContexts.size())
       {
@@ -337,11 +177,11 @@ class OpenCVTracker : public CTracker
 
         cv::Rect2d bb;
 
-        bool fRet = tc.iTracker->update(m, bb);
+        bool fRet = tc.iTracker->update(frame, bb);
 
         if (fRet)
         {
-          if (IsRectInsideMat(bb, m))
+          if (IsRectInsideMat(bb, frame))
           {
             tc.iTrail.push_back(bb);
 
@@ -349,20 +189,20 @@ class OpenCVTracker : public CTracker
 
             if (!tc.iSkip)
             {
-              tc.iSkip = iCounter->ProcessTrail(tc.iTrail, m);
+              tc.iSkip = iCounter->ProcessTrail(tc.iTrail, frame);
             }
           }
           else
           {
             //std::cout << "Tracker " << tc.id << " out of the bound, trail size : " << tc.iTrail.size() << "\n";
-            PurgeAndSaveTrackingContext(tc);
+            SaveAndPurgeTrackingContext(tc);
             iTrackingContexts.erase(iTrackingContexts.begin() + (i - 1));
           }
         }
         else
         {
           //std::cout << "Tracker " << tc.id << " lost, trail size : " << tc.iTrail.size()<< "\n";
-          PurgeAndSaveTrackingContext(tc);
+          SaveAndPurgeTrackingContext(tc);
           iTrackingContexts.erase(iTrackingContexts.begin() + (i - 1));
         }
       }
@@ -372,6 +212,25 @@ class OpenCVTracker : public CTracker
 
   protected:
 
+    size_t iCount = 0;
+
+    SPCCounter iCounter;
+
+    std::vector<TrackingContext> iTrackingContexts;
+
+    std::vector<TrackingContext> iPurgedContexts;
+
+    virtual void SaveAndPurgeTrackingContext(TrackingContext& tc)
+    {
+      OnEvent(std::ref(tc));
+
+      if (iPurgedContexts.size() > 20)
+      {
+        iPurgedContexts.clear();
+      }
+
+      iPurgedContexts.push_back(tc);
+    }
 };
 
 using SPCTracker = std::shared_ptr<CTracker>;

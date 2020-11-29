@@ -17,7 +17,7 @@ namespace CVL
  #else
   auto make_camera(const std::string& source, const std::string& target, const std::string& algo, const std::string& tracker)
   {
-    return std::make_shared<CCamera>(source, target, algo, tracker);
+    return std::make_shared<CCamera>(source, target, algo);
   }
  #endif
 

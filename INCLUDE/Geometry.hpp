@@ -49,6 +49,8 @@ struct TrackingContext
 {
   int id;
 
+  int iLostCount = 0;
+
   Detection *iMatch;
 
   std::vector<float> iAge;

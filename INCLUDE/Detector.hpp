@@ -140,7 +140,7 @@ class FaceDetector : public CDetector
       {
         float confidence = detectionMat.at<float>(i, 2);
 
-        if (confidence > 0.6)
+        if (confidence > 0.8)
         {
           int x1 = static_cast<int>(detectionMat.at<float>(i, 3) * frame.cols);
           int y1 = static_cast<int>(detectionMat.at<float>(i, 4) * frame.rows);
@@ -170,8 +170,7 @@ class FaceDetector : public CDetector
 
     virtual void OnEvent(std::any e)
     {
-      auto tc = std::any_cast<
-                  std::reference_wrapper<TrackingContext>>(e).get();
+      auto tc = std::any_cast<std::reference_wrapper<TrackingContext>>(e).get();
 
       if (tc.iThumbnails.size())
       {

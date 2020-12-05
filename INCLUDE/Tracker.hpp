@@ -28,6 +28,11 @@ class CTracker : public NPL::CSubject<uint8_t, uint8_t>
 
     void ClearAllContexts(void)
     {
+      for (auto& tc : iTrackingContexts)
+      {
+        SaveAndPurgeTrackingContext(tc);
+      }
+
       iTrackingContexts.clear();
       iCounter.reset(new CCounter());
     }
@@ -87,6 +92,7 @@ class CTracker : public NPL::CSubject<uint8_t, uint8_t>
       for (auto& t : iTrackingContexts)
       {
         int maxArea = 0;
+        
         t.iMatch = nullptr;
 
         for (auto& d : detections)
@@ -122,6 +128,10 @@ class CTracker : public NPL::CSubject<uint8_t, uint8_t>
         {
           cv::rectangle(mat, std::get<0>(*(t.iMatch)), 
                cv::Scalar(255, 0, 0 ), 1, 1);  // detection blue
+        }
+        else
+        {
+          t.iLostCount++;
         }
       }
     }
@@ -167,13 +177,13 @@ class CTracker : public NPL::CSubject<uint8_t, uint8_t>
       {
         auto& tc = iTrackingContexts[i - 1];
 
-        // if (tc.IsFrozen())
-        // {
-        //   PurgeAndSaveTrackingContext(tc);
-        //   iTrackingContexts.erase(iTrackingContexts.begin() + (i - 1));
-        //   //std::cout << "removed frozen tc\n";
-        //   continue;
-        // }
+        if (tc.iLostCount > 10)
+        {
+          SaveAndPurgeTrackingContext(tc);
+          iTrackingContexts.erase(iTrackingContexts.begin() + (i - 1));
+          std::cout << "removed frozen tc\n";
+          continue;
+        }
 
         cv::Rect2d bb;
 

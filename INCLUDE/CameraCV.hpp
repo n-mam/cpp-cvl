@@ -49,6 +49,26 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
         iDetector = std::make_shared<FaceDetector>();
 
         iFRModel = cv::face::LBPHFaceRecognizer::create();
+
+        std::vector<cv::Mat> images;
+        std::vector<int> labels;
+
+        std::string basepath = "../../cpp-cvl/MODELS/";
+
+        for (int i = 1; i <= 8; i++)
+        {
+          images.push_back(cv::imread(basepath + "o" + std::to_string(i) + ".jpg", 0));
+          labels.push_back(0);
+        }
+        for (int i = 1; i <= 6; i++)
+        {
+          images.push_back(cv::imread(basepath + "b" + std::to_string(i) + ".jpg", 0));
+          labels.push_back(1);
+        }
+
+        iFaceSize = cv::Size(150, 150); //images[0].size().width, images[0].size().height);
+
+        iFRModel->train(images, labels);
       }
       else if (target == "mocap")
       {
@@ -116,41 +136,6 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       return iRunThread.joinable() ? true : false;
     }
 
-    virtual void UpdateFRModel(TrackingContext& tc) 
-    {
-        std::vector<cv::Mat> gray;
-
-        for (auto& m : tc.iThumbnails)
-        {
-          cv::Mat g;
-          cv::cvtColor(m, g, cv::COLOR_BGR2GRAY);
-          gray.push_back(g);
-        }
-
-        cv::imwrite(std::to_string(tc.id) + "_.jpg", gray[gray.size()/2]);
-
-        if (!iTrained)
-        {
-          iFRModel->train(gray, std::vector<int>(gray.size(), tc.id));
-          iTrained = true;
-        }
-
-        int predictedLabel = -1;
-        double confidence = 0.0;
-
-        iFRModel->predict(gray[gray.size() / 2], predictedLabel, confidence);
-
-        if (confidence <= 20)
-        {
-          std::cout << "FR match : predicted label : " << predictedLabel << ", confidence " << confidence << "\n";
-        }
-        else
-        {
-          std::cout << "FR update : predicted label : " << predictedLabel << ", confidence " << confidence << ", id " << tc.id << "\n";
-          iFRModel->update(gray, std::vector<int>(gray.size(), tc.id));
-        }
-    }
-
     virtual void OnEvent(std::any e)
     {
       auto in = std::any_cast<
@@ -159,7 +144,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
             std::string,
             std::string,
             std::vector<uchar>,
-            std::reference_wrapper<TrackingContext>
+            TrackingContext&
           >
         >>(e).get();
 
@@ -172,11 +157,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
       if (iFRModel)
       {
-        UpdateFRModel(
-          std::any_cast<
-            std::reference_wrapper<TrackingContext>
-          >(std::get<3>(in)).get()
-        );
+        UpdateFRModel(std::get<3>(in));
       }
     }
 
@@ -338,9 +319,50 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
     bool iTrained = false;
 
+    cv::Size iFaceSize;
+
     cv::Ptr<cv::face::LBPHFaceRecognizer> iFRModel = nullptr;
 
     TOnCameraEventCbk iOnCameraEventCbk = nullptr;
+
+    void UpdateFRModel(TrackingContext& tc) 
+    {
+      std::vector<cv::Mat> gray;
+
+      for (auto& m : tc.iThumbnails)
+      {
+        cv::Mat g;
+        cv::cvtColor(m, g, cv::COLOR_BGR2GRAY);
+        cv::resize(g, g, iFaceSize);
+        gray.push_back(g);
+      }
+
+      int predictedLabel = -1, selectedLabel = -1;
+      double confidence = 1000, selectedconfidence = 1000;
+
+      for (auto& thumb : gray)
+      {
+        iFRModel->predict(thumb, predictedLabel, confidence);
+
+        //std::cout << "predictedLabel : " << predictedLabel << ", confidence : " << confidence << "\n";
+
+        if (confidence < selectedconfidence)
+        {
+          selectedconfidence = confidence;
+          selectedLabel = predictedLabel;
+        }
+      }
+
+      if (selectedconfidence > 95)
+      {
+        iFRModel->update(gray, std::vector<int>(gray.size(), tc.id + 2));
+        std::cout << "FR update, id : " << tc.id + 2 << "\n";
+      }
+      else
+      {
+        std::cout << "FR match, id : " << selectedLabel << " confidence : " << selectedconfidence << "\n";
+      }
+    }
 };
 
 using SPCCamera = std::shared_ptr<CCamera>;

@@ -48,27 +48,28 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       {
         iDetector = std::make_shared<FaceDetector>();
 
-        iFRModel = cv::face::LBPHFaceRecognizer::create();
-
-        std::vector<cv::Mat> images;
-        std::vector<int> labels;
-
-        std::string basepath = "../../cpp-cvl/MODELS/";
-
-        for (int i = 1; i <= 8; i++)
+        if (!iFRModel)
         {
-          images.push_back(cv::imread(basepath + "o" + std::to_string(i) + ".jpg", 0));
-          labels.push_back(0);
-        }
-        for (int i = 1; i <= 6; i++)
-        {
-          images.push_back(cv::imread(basepath + "b" + std::to_string(i) + ".jpg", 0));
-          labels.push_back(1);
-        }
+          iFRModel = cv::face::LBPHFaceRecognizer::create(1,8,8,8,100);
 
-        iFaceSize = cv::Size(150, 150); //images[0].size().width, images[0].size().height);
+          std::vector<cv::Mat> images;
+          std::vector<int> labels;
 
-        iFRModel->train(images, labels);
+          std::string basepath = "../../cpp-cvl/MODELS/";
+
+          for (int i = 1; i <= 8; i++)
+          {
+            images.push_back(cv::imread(basepath + "o" + std::to_string(i) + ".jpg", 0));
+            labels.push_back(0);
+          }
+          for (int i = 1; i <= 6; i++)
+          {
+            images.push_back(cv::imread(basepath + "b" + std::to_string(i) + ".jpg", 0));
+            labels.push_back(1);
+          }
+
+          iFRModel->train(images, labels);
+        }
       }
       else if (target == "mocap")
       {
@@ -311,29 +312,29 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
     std::thread iRunThread;
 
-    SPCSource   iSource;
+    SPCSource iSource;
 
-    SPCTracker  iTracker;
+    SPCTracker iTracker;
 
     SPCDetector iDetector;
 
-    bool iTrained = false;
-
-    cv::Size iFaceSize;
-
-    cv::Ptr<cv::face::LBPHFaceRecognizer> iFRModel = nullptr;
-
     TOnCameraEventCbk iOnCameraEventCbk = nullptr;
 
-    void UpdateFRModel(TrackingContext& tc) 
+    static int iNextLabel;
+
+    static cv::Ptr<cv::face::LBPHFaceRecognizer> iFRModel;
+
+    static void UpdateFRModel(TrackingContext& tc) 
     {
+      if (tc.iThumbnails.size() < 20) return;
+
       std::vector<cv::Mat> gray;
 
       for (auto& m : tc.iThumbnails)
       {
         cv::Mat g;
         cv::cvtColor(m, g, cv::COLOR_BGR2GRAY);
-        cv::resize(g, g, iFaceSize);
+        cv::resize(g, g, cv::Size(150, 150));
         gray.push_back(g);
       }
 
@@ -355,8 +356,9 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
       if (selectedconfidence > 95)
       {
-        iFRModel->update(gray, std::vector<int>(gray.size(), tc.id + 2));
-        std::cout << "FR update, id : " << tc.id + 2 << "\n";
+        iFRModel->update(gray, std::vector<int>(gray.size(), iNextLabel));
+        std::cout << "FR update, id : " << iNextLabel << "\n";
+        iNextLabel++;
       }
       else
       {
@@ -364,6 +366,10 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       }
     }
 };
+
+int CCamera::iNextLabel = 2;
+
+cv::Ptr<cv::face::LBPHFaceRecognizer> CCamera::iFRModel = nullptr;
 
 using SPCCamera = std::shared_ptr<CCamera>;
 

@@ -5,23 +5,10 @@
 #include <chrono>
 #include <functional>
 
-using TOnCameraEventCbk = std::function<void (const std::string&, const std::string&, std::vector<uint8_t>&)>;
-
+#include <Geometry.hpp>
 #include <CSubject.hpp>
 #include <Encryption.hpp>
 
-// face detection : age and gender
-int fd_main(int argc, char *argv[]);
-void fd_setcbk(TOnCameraEventCbk cbk);
-void fd_play(bool);
-void fd_pause(bool);
-void fd_stop(void);
-// pedestrian tracker
-int pt_main(int argc, char *argv[]);
-void pt_setcbk(TOnCameraEventCbk cbk);
-void pt_play(bool);
-void pt_pause(bool);
-void pt_stop(void);
 // face recognition
 int fr_main(int argc, char *argv[]);
 void fr_setcbk(TOnCameraEventCbk cbk);
@@ -29,52 +16,36 @@ void fr_play(bool);
 void fr_pause(bool);
 void fr_stop(void);
 
-class CCamera : public NPL::CSubject<uint8_t, uint8_t>
+class COVCamera : public NPL::CSubject<uint8_t, uint8_t>
 {
   public:
 
-    CCamera(const std::string& source, const std::string& target)
+    COVCamera(const std::string& source, const std::string& target)
     {
       iSource = source;
       iTarget = target;
     }
 
-    ~CCamera()
+    ~COVCamera()
     {
       Stop();
     }
 
     void Start(TOnCameraEventCbk cbk = nullptr)
     {
-      if (iTarget == "face")
-      {
-        fd_setcbk(cbk);
-      }
-      else if (iTarget == "fr") 
+      if (iTarget == "fr") 
       {
         fr_setcbk(cbk);
       }
-      else if (iTarget == "person")
-      {
-        pt_setcbk(cbk);
-      }
 
-      iRunThread = std::thread(&CCamera::Run, this);
+      iRunThread = std::thread(&COVCamera::Run, this);
     }
 
     void Stop(void)
     {
-      if (iTarget == "face")
-      {
-        fd_stop();  
-      }
-      else if (iTarget == "fr") 
+      if (iTarget == "fr") 
       {
         fr_stop();
-      }
-      else if (iTarget == "person")
-      {
-        pt_stop();
       }
 
       if (iRunThread.joinable())
@@ -89,20 +60,10 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
     {
       std::lock_guard<std::mutex> lg(iLock);
 
-      if (iTarget == "face")
-      {
-        fd_play(true);
-        fd_pause(false);  
-      }
-      else if (iTarget == "fr") 
+      if (iTarget == "fr") 
       {
         fr_play(true);
-        fr_pause(false); 
-      }
-      else if (iTarget == "person")
-      {
-        pt_play(true);
-        pt_pause(false);
+        fr_pause(false);
       }
     }
 
@@ -110,17 +71,9 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
     {
       std::lock_guard<std::mutex> lg(iLock);
 
-      if (iTarget == "face")
-      {
-        fd_pause(true);  
-      }
-      else if (iTarget == "fr") 
+      if (iTarget == "fr") 
       {
         fr_pause(true); 
-      }
-      else if (iTarget == "person")
-      {
-        pt_pause(true);
       }
     }
 
@@ -128,17 +81,9 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
     {
       std::lock_guard<std::mutex> lg(iLock);
 
-      if (iTarget == "face")
-      {
-        fd_play(false);
-      }
-      else if (iTarget == "fr") 
+      if (iTarget == "fr") 
       {
         fr_play(false);
-      }
-      else if (iTarget == "person")
-      {
-        pt_play(false);
       }
     }
 
@@ -166,34 +111,10 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
  
     void Run(void)
     {
-      if (iTarget == "face")
-      {
-        char *argv[] =
-         {
-           "demo",
-           "-i", (char *)iSource.c_str(),
-           "-m", "../cpp-cvl/MODELS/face-detection-adas-0001/FP16/face-detection-adas-0001.xml",
-           "-m_ag", "../cpp-cvl/MODELS/age-gender-recognition-retail-0013/FP16/age-gender-recognition-retail-0013.xml"
-         };
-
-        fd_main(7, argv);
-      }
-      else if (iTarget == "fr")
+      if (iTarget == "fr")
       {
         char *argv[] =  {"a", "b"};
         fr_main(4, argv);
-      }
-      else if (iTarget == "person")
-      {
-        char *argv[] =
-         {
-           "demo",
-           "-i", (char *)iSource.c_str(),
-           "-m_det", "../cpp-cvl/MODELS/person-detection-retail-0013/FP16/person-detection-retail-0013.xml",
-           "-m_reid", "../cpp-cvl/MODELS/person-reidentification-retail-0270/FP16/person-reidentification-retail-0270.xml"
-         };
-
-        pt_main(7, argv);
       }
       else 
       {
@@ -210,6 +131,6 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
     std::string iTarget; 
 };
 
-using SPCCamera = std::shared_ptr<CCamera>;
+using SPCOVCamera = std::shared_ptr<COVCamera>;
 
 #endif

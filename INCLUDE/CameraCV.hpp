@@ -1,5 +1,6 @@
 #ifndef CAMERACV_HPP
 #define CAMERACV_HPP
+
 #include <windows.h>
 
 #include <thread>

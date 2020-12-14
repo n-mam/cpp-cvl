@@ -1,6 +1,9 @@
 #ifndef GEOMETRY_HPP
 #define GEOMETRY_HPP
 
+#include <opencv2/opencv.hpp>
+#include <opencv2/tracking/tracking.hpp>
+
 #include <tuple>
 #include <vector>
 

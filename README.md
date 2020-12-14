@@ -80,3 +80,14 @@ cmake ^
 -DHAVE_opencv_python3=ON ^
 -DBUILD_opencv_rgbd=OFF ^
 -DCMAKE_BUILD_TYPE=Release ..
+
+
+smart_classroom_demo.exe ^
+ -m_fd F:\cpp-cvl\MODELS\face-detection-adas-0001\FP16\face-detection-adas-0001.xml ^
+ -m_lm F:\cpp-cvl\MODELS\landmarks-regression-retail-0009\landmarks-regression-retail-0009.xml ^
+ -m_reid F:\cpp-cvl\MODELS\face-reidentification-retail-0095\FP16\face-reidentification-retail-0095.xml ^
+ -fg F:\openvino\inference_engine\demos\smart_classroom_demo\faces_gallery.json ^
+ -i D:\bush1.mp4
+
+for gesture standing sitting etc add -m_act F:\cpp-cvl\MODELS\person-detection-action-recognition-0005\FP16\person-detection-action-recognition-0005.xml ^
+

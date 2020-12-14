@@ -55,7 +55,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
           std::vector<cv::Mat> images;
           std::vector<int> labels;
 
-          std::string basepath = "../../cpp-cvl/MODELS/";
+          std::string basepath = "../../cpp-cvl/MODELS/";  //"./MODELS/" ;
 
           for (int i = 1; i <= 8; i++)
           {
@@ -93,7 +93,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       if (iSource->isOpened())
       {
         SetProperty("stop", "false");
-	      SetProperty("pause", "false");
+        SetProperty("pause", "false");
 
         iOnCameraEventCbk = cbk;
 
@@ -209,7 +209,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       while (!GetPropertyAsBool("stop"))
       {
         if (!iSource->Read(frame))
-	      {
+        {
           if (iSource->HasEnded())
           {
             iSource->Rewind();

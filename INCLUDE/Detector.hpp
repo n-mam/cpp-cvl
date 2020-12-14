@@ -59,6 +59,25 @@ class CDetector : public NPL::CSubject<uint8_t, uint8_t>
 
     virtual Detections Detect(cv::Mat& frame) = 0;
 
+    std::string TrailToPath(TrackingContext& tc)
+    {
+      std::string path;
+
+      for (auto& r : tc.iTrail)
+      {
+        auto p = GetRectCenter(r);
+
+        if (path.size())
+        {
+          path += ", ";
+        }
+
+        path += std::to_string(p.x) + " " + std::to_string(p.y);
+      }
+
+      return path;
+    }
+
   protected:
 
     std::string iTarget;
@@ -184,17 +203,7 @@ class FaceDetector : public CDetector
         auto& demography = std::get<1>(out);
         auto& thumb = std::get<2>(out);
 
-        for (auto& r : tc.iTrail)
-        {
-          auto p = GetRectCenter(r);
-
-          if (path.size())
-          {
-            path += ", ";
-          }
-
-          path += std::to_string(p.x) + " " + std::to_string(p.y);
-        }
+        path = TrailToPath(tc);
 
         if (tc.iAge.size() != tc.iGender.size()) 
         {
@@ -279,6 +288,29 @@ class PeopleDetector : public CDetector
 
       return out;
     }
+
+    virtual void OnEvent(std::any e)
+    {
+      auto tc = std::any_cast<std::reference_wrapper<TrackingContext>>(e).get();
+
+      if (tc.iThumbnails.size())
+      {
+        auto out = std::make_tuple(
+           std::string(),
+           std::string(),
+           std::vector<uchar>(),
+           std::ref(tc));
+
+        auto& path = std::get<0>(out);
+        auto& thumb = std::get<2>(out);
+
+        path = TrailToPath(tc);
+
+        cv::imencode(".jpg", tc.iThumbnails[tc.iThumbnails.size() / 2], thumb);
+
+        CSubject<uint8_t, uint8_t>::OnEvent(std::ref(out));
+      }
+    }    
 
   protected:
 

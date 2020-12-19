@@ -5,9 +5,7 @@
 #include <chrono>
 #include <functional>
 
-#include <Geometry.hpp>
-#include <CSubject.hpp>
-#include <Encryption.hpp>
+#include <CameraCV.hpp>
 
 // face recognition
 int fr_main(int argc, char *argv[]);
@@ -16,7 +14,7 @@ void fr_play(bool);
 void fr_pause(bool);
 void fr_stop(void);
 
-class COVCamera : public NPL::CSubject<uint8_t, uint8_t>
+class COVCamera : public CCamera
 {
   public:
 
@@ -26,12 +24,12 @@ class COVCamera : public NPL::CSubject<uint8_t, uint8_t>
       iTarget = target;
     }
 
-    ~COVCamera()
+    virtual ~COVCamera()
     {
       Stop();
     }
 
-    void Start(TOnCameraEventCbk cbk = nullptr)
+    virtual void Start(TOnCameraEventCbk cbk = nullptr)
     {
       if (iTarget == "fr") 
       {
@@ -41,22 +39,15 @@ class COVCamera : public NPL::CSubject<uint8_t, uint8_t>
       iRunThread = std::thread(&COVCamera::Run, this);
     }
 
-    void Stop(void)
+    virtual void Stop(void)
     {
       if (iTarget == "fr") 
       {
         fr_stop();
       }
-
-      if (iRunThread.joinable())
-      {
-        iRunThread.join();
-      }
-
-      std::cout << "camera thread joined\n";
     }
 
-    void Play(void)
+    virtual void Play(void)
     {
       std::lock_guard<std::mutex> lg(iLock);
 
@@ -67,7 +58,7 @@ class COVCamera : public NPL::CSubject<uint8_t, uint8_t>
       }
     }
 
-    void Pause(void)
+    virtual void Pause(void)
     {
       std::lock_guard<std::mutex> lg(iLock);
 
@@ -77,7 +68,7 @@ class COVCamera : public NPL::CSubject<uint8_t, uint8_t>
       }
     }
 
-    void StopPlay(void)
+    virtual void StopPlay(void)
     {
       std::lock_guard<std::mutex> lg(iLock);
 
@@ -87,34 +78,24 @@ class COVCamera : public NPL::CSubject<uint8_t, uint8_t>
       }
     }
 
-    void Forward(void)
-    {
+    virtual void Forward(void) {}
 
-    }
-
-    void Backward(void)
-    {
-
-    }
-
-    bool IsStarted()
-    {
-      std::lock_guard<std::mutex> lg(iLock);
-      return iRunThread.joinable() ? true : false;
-    }
-
-    bool IsPaused()
-    {
-      std::lock_guard<std::mutex> lg(iLock);
-      return false;
-    }
+    virtual void Backward(void) {}
  
-    void Run(void)
+    virtual void Run(void)
     {
       if (iTarget == "fr")
       {
-        char *argv[] =  {"a", "b"};
-        fr_main(4, argv);
+        char * argv[] =  {
+         "smart_classroom_demo.exe",
+         "-m_fd", "../../cpp-cvl/MODELS/face-detection-adas-0001/FP16/face-detection-adas-0001.xml",
+         "-m_lm", "../../cpp-cvl/MODELS/landmarks-regression-retail-0009/landmarks-regression-retail-0009.xml",
+         "-m_reid", "../../cpp-cvl/MODELS/face-reidentification-retail-0095/FP16/face-reidentification-retail-0095.xml",
+         "-fg", "F:/openvino/inference_engine/demos/smart_classroom_demo/faces_gallery.json",
+         "-i", (char *)(iSource.c_str())
+        };
+
+        fr_main(sizeof(argv)/sizeof(char *), argv);
       }
       else 
       {
@@ -123,8 +104,6 @@ class COVCamera : public NPL::CSubject<uint8_t, uint8_t>
     }
 
   protected:
-
-    std::thread iRunThread;
 
     std::string iSource;
     

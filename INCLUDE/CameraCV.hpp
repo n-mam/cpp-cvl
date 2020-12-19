@@ -1,8 +1,6 @@
 #ifndef CAMERACV_HPP
 #define CAMERACV_HPP
 
-#include <windows.h>
-
 #include <thread>
 #include <chrono>
 #include <future>
@@ -20,6 +18,8 @@
 class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 {
   public:
+
+    CCamera() {}
 
     CCamera(const std::string& source, const std::string& target, const std::string& algo)
     {
@@ -48,29 +48,6 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       else if (target == "face")
       {
         iDetector = std::make_shared<FaceDetector>();
-
-        if (!iFRModel)
-        {
-          iFRModel = cv::face::LBPHFaceRecognizer::create(1,8,8,8,100);
-
-          std::vector<cv::Mat> images;
-          std::vector<int> labels;
-
-          std::string basepath = "../../cpp-cvl/MODELS/";  //"./MODELS/" ;
-
-          for (int i = 1; i <= 8; i++)
-          {
-            images.push_back(cv::imread(basepath + "o" + std::to_string(i) + ".jpg", 0));
-            labels.push_back(0);
-          }
-          for (int i = 1; i <= 6; i++)
-          {
-            images.push_back(cv::imread(basepath + "b" + std::to_string(i) + ".jpg", 0));
-            labels.push_back(1);
-          }
-
-          iFRModel->train(images, labels);
-        }
       }
       else if (target == "mocap")
       {
@@ -84,12 +61,12 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       iTracker = std::make_shared<CTracker>();
     }
 
-    ~CCamera()
+    virtual ~CCamera()
     {
       Stop();
     }
 
-    void Start(TOnCameraEventCbk cbk = nullptr)
+    virtual void Start(TOnCameraEventCbk cbk = nullptr)
     {
       if (iSource->isOpened())
       {
@@ -108,7 +85,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       }
     }
 
-    void Stop(void)
+    virtual void Stop(void)
     {
       SetProperty("stop", "true");
 
@@ -117,28 +94,35 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
         iRunThread.join();
       }
 
-      iTracker->RemoveAllEventListeners();
-      iDetector->RemoveAllEventListeners();
+      if (iTracker)
+      {
+        iTracker->RemoveAllEventListeners();
+      }
+      if (iDetector)
+      {
+        iDetector->RemoveAllEventListeners();
+      }
+
       RemoveAllEventListeners();
     }
 
-    void Forward(void)
+    virtual void Forward(void)
     {
       iSource->Forward();
     }
 
-    void Backward(void)
+    virtual void Backward(void)
     {
       iSource->Backward();
     }
 
-    bool IsStarted()
+    virtual bool IsStarted()
     {
       std::lock_guard<std::mutex> lg(iLock);
       return iRunThread.joinable() ? true : false;
     }
 
-    virtual void OnEvent(std::any e)
+    virtual void OnEvent(std::any e) override
     {
       auto in = std::any_cast<
         std::reference_wrapper<
@@ -156,11 +140,6 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
         std::get<1>(in), //demography
         std::get<2>(in)  //thumbnail
       );
-
-      if (iFRModel)
-      {
-        UpdateFRModel(std::get<3>(in));
-      }
     }
 
     virtual void SetProperty(const std::string& key, const std::string& value) override
@@ -201,7 +180,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       return CSubject<uint8_t, uint8_t>::GetProperty(key);
     }
 
-    void Run(void)
+    virtual void Run(void)
     {
       cv::Mat frame;
 
@@ -320,57 +299,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
     SPCDetector iDetector;
 
     TOnCameraEventCbk iOnCameraEventCbk = nullptr;
-
-    static int iNextLabel;
-
-    static cv::Ptr<cv::face::LBPHFaceRecognizer> iFRModel;
-
-    static void UpdateFRModel(TrackingContext& tc) 
-    {
-      if (tc.iThumbnails.size() < 20) return;
-
-      std::vector<cv::Mat> gray;
-
-      for (auto& m : tc.iThumbnails)
-      {
-        cv::Mat g;
-        cv::cvtColor(m, g, cv::COLOR_BGR2GRAY);
-        cv::resize(g, g, cv::Size(150, 150));
-        gray.push_back(g);
-      }
-
-      int predictedLabel = -1, selectedLabel = -1;
-      double confidence = 1000, selectedconfidence = 1000;
-
-      for (auto& thumb : gray)
-      {
-        iFRModel->predict(thumb, predictedLabel, confidence);
-
-        //std::cout << "predictedLabel : " << predictedLabel << ", confidence : " << confidence << "\n";
-
-        if (confidence < selectedconfidence)
-        {
-          selectedconfidence = confidence;
-          selectedLabel = predictedLabel;
-        }
-      }
-
-      if (selectedconfidence > 95)
-      {
-        iFRModel->update(gray, std::vector<int>(gray.size(), iNextLabel));
-        std::cout << "FR update, id : " << iNextLabel << "\n";
-        iNextLabel++;
-      }
-      else
-      {
-        std::cout << "FR match, id : " << selectedLabel << " confidence : " << selectedconfidence << "\n";
-      }
-    }
 };
-
-int CCamera::iNextLabel = 2;
-
-cv::Ptr<cv::face::LBPHFaceRecognizer> CCamera::iFRModel = nullptr;
 
 using SPCCamera = std::shared_ptr<CCamera>;
 

@@ -31,6 +31,57 @@
 
 using namespace InferenceEngine;
 
+/** nmam+ */
+
+//from geometry.hpp
+using TOnCameraEventCbk = std::function<void (const std::string&, const std::string&, const std::string&, std::vector<uint8_t>&)>;
+
+bool iStop = false;
+bool iPause = false;
+bool iPlay = true;
+
+TOnCameraEventCbk iOnCameraEventCbk = nullptr;
+
+__declspec(dllexport)
+void __cdecl fr_stop(void)
+{
+  iStop = true;
+}
+
+__declspec(dllexport)
+void __cdecl fr_pause(bool bPause = true)
+{
+  iPause = bPause;
+}
+
+__declspec(dllexport)
+void __cdecl fr_play(bool bPlay = true)
+{
+  iPlay = bPlay;
+}
+
+__declspec(dllexport)
+void __cdecl fr_setcbk(TOnCameraEventCbk cbk)
+{
+  iOnCameraEventCbk = cbk;
+}
+
+void ProcessFrame(const cv::Mat& frame)
+{
+  auto clone = frame.clone();
+
+  if (clone.cols > 600)
+  {
+    auto scale = (float) 600 / clone.cols;
+    cv::resize(clone, clone, cv::Size(0, 0), scale, scale);
+  }
+  std::vector<uchar> buf;
+  cv::imencode(".jpg", clone, buf);
+  iOnCameraEventCbk("play", "", "", buf);
+}
+
+/** nmam- */
+
 namespace {
 
 class Visualizer {
@@ -93,7 +144,11 @@ public:
 
     void Show() const {
         if (enabled_) {
-            cv::imshow(main_window_name_, frame_);
+            //cv::imshow(main_window_name_, frame_);
+            if (iPlay)
+            {
+              ProcessFrame(frame_);
+            }             
         }
 
         if (writer_.isOpened()) {
@@ -158,8 +213,8 @@ public:
                             bbox_color, cv::FILLED);
         }
         if (!label_to_draw.empty()) {
-            cv::putText(frame_, label_to_draw, cv::Point(rect.x, rect.y), cv::FONT_HERSHEY_SIMPLEX, 0.4,
-                        text_color, 1, cv::LINE_AA);
+            cv::putText(frame_, label_to_draw, cv::Point(rect.x, rect.y), cv::FONT_HERSHEY_SIMPLEX, 1,
+                        text_color, 2, cv::LINE_AA);
         }
     }
 
@@ -548,54 +603,6 @@ bool ParseAndCheckCommandLine(int argc, char *argv[]) {
 
 }  // namespace
 
-/** nmam+ */
-
-using TOnCameraEventCbk = std::function<void (const std::string&, const std::string&, std::vector<uint8_t>&)>;
-
-bool iStop = false;
-bool iPause = false;
-bool iPlay = false;
-
-TOnCameraEventCbk iCameraCbk = nullptr;
-
-__declspec(dllexport)
-void __cdecl fr_stop(void)
-{
-  iStop = true;
-}
-
-__declspec(dllexport)
-void __cdecl fr_pause(bool bPause = true)
-{
-  iPause = bPause;
-}
-
-__declspec(dllexport)
-void __cdecl fr_play(bool bPlay = true)
-{
-  iPlay = bPlay;
-}
-
-__declspec(dllexport)
-void __cdecl fr_setcbk(TOnCameraEventCbk cbk)
-{
-  iCameraCbk = cbk;
-}
-
-void ProcessFrame(cv::Mat& frame)
-{
-  if (frame.cols > 600)
-  {
-    auto scale = (float) 600 / frame.cols;
-    cv::resize(frame, frame, cv::Size(0, 0), scale, scale);
-  }
-  std::vector<uint8_t> buf;
-  cv::imencode(".jpg", frame, buf);
-  iCameraCbk("play", "", buf);
-}
-
-/** nmam- */
-
 __declspec(dllexport)
 int __cdecl fr_main(int argc, char* argv[]) {
     iStop = false;
@@ -807,6 +814,7 @@ int __cdecl fr_main(int argc, char* argv[]) {
         const cv::Scalar green_color(0, 255, 0);
         const cv::Scalar red_color(0, 0, 255);
         const cv::Scalar white_color(255, 255, 255);
+        const cv::Scalar blue_color(255, 0, 0);
         std::vector<std::map<int, int>> face_obj_id_to_action_maps;
         std::map<int, int> top_k_obj_ids;
 
@@ -1014,7 +1022,7 @@ int __cdecl fr_main(int argc, char* argv[]) {
                             label_to_draw += "[" + GetActionTextLabel(action_ind, actions_map) + "]";
                         }
                         frame_face_obj_id_to_action[face.object_id] = action_ind;
-                        sc_visualizer.DrawObject(face.rect, label_to_draw, red_color, white_color, true);
+                        sc_visualizer.DrawObject(face.rect, label_to_draw, blue_color, white_color, false);
                         logger.AddFaceToFrame(face.rect, face_label, "");
                     }
 
@@ -1070,10 +1078,10 @@ int __cdecl fr_main(int argc, char* argv[]) {
             }
         }
 
-        if (iCameraCbk)
+        if (iOnCameraEventCbk)
         {
-          iCameraCbk("stop", "", std::vector<uint8_t>());
-          iCameraCbk = nullptr;
+          iOnCameraEventCbk("stop", "", "", std::vector<uint8_t>());
+          iOnCameraEventCbk = nullptr;
         }
 
         sc_visualizer.Finalize();

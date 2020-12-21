@@ -91,7 +91,7 @@ class COVCamera : public CCamera
          "-m_fd", "../../cpp-cvl/MODELS/face-detection-adas-0001/FP16/face-detection-adas-0001.xml",
          "-m_lm", "../../cpp-cvl/MODELS/landmarks-regression-retail-0009/landmarks-regression-retail-0009.xml",
          "-m_reid", "../../cpp-cvl/MODELS/face-reidentification-retail-0095/FP16/face-reidentification-retail-0095.xml",
-         "-fg", "F:/openvino/inference_engine/demos/smart_classroom_demo/faces_gallery.json",
+         "-fg", "../../cpp-cvl/MODELS/fr_gallery/faces_gallery.json",
          "-i", (char *)(iSource.c_str())
         };
 

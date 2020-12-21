@@ -91,7 +91,7 @@ endmacro()
     endif()
 
     # Create executable file from sources
-    add_library(${IE_SAMPLE_NAME} SHARED ${IE_SAMPLE_SOURCES} ${IE_SAMPLE_HEADERS})
+    add_library(${IE_SAMPLE_NAME} STATIC ${IE_SAMPLE_SOURCES} ${IE_SAMPLE_HEADERS})
 
     if(WIN32)
         set_target_properties(${IE_SAMPLE_NAME} PROPERTIES COMPILE_PDB_NAME ${IE_SAMPLE_NAME})

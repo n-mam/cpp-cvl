@@ -28,59 +28,9 @@
 #include "image_grabber.hpp"
 #include "logger.hpp"
 #include "smart_classroom_demo.hpp"
+#include <fr.hpp>
 
 using namespace InferenceEngine;
-
-/** nmam+ */
-
-//from geometry.hpp
-using TOnCameraEventCbk = std::function<void (const std::string&, const std::string&, const std::string&, std::vector<uint8_t>&)>;
-
-bool iStop = false;
-bool iPause = false;
-bool iPlay = true;
-
-TOnCameraEventCbk iOnCameraEventCbk = nullptr;
-
-__declspec(dllexport)
-void __cdecl fr_stop(void)
-{
-  iStop = true;
-}
-
-__declspec(dllexport)
-void __cdecl fr_pause(bool bPause = true)
-{
-  iPause = bPause;
-}
-
-__declspec(dllexport)
-void __cdecl fr_play(bool bPlay = true)
-{
-  iPlay = bPlay;
-}
-
-__declspec(dllexport)
-void __cdecl fr_setcbk(TOnCameraEventCbk cbk)
-{
-  iOnCameraEventCbk = cbk;
-}
-
-void ProcessFrame(const cv::Mat& frame)
-{
-  auto clone = frame.clone();
-
-  if (clone.cols > 600)
-  {
-    auto scale = (float) 600 / clone.cols;
-    cv::resize(clone, clone, cv::Size(0, 0), scale, scale);
-  }
-  std::vector<uchar> buf;
-  cv::imencode(".jpg", clone, buf);
-  iOnCameraEventCbk("play", "", "", buf);
-}
-
-/** nmam- */
 
 namespace {
 
@@ -142,12 +92,12 @@ public:
         }
     }
 
-    void Show() const {
+    void Show(FR *fr = nullptr) const {
         if (enabled_) {
             //cv::imshow(main_window_name_, frame_);
-            if (iPlay)
+            if (fr && fr->iPlay)
             {
-              ProcessFrame(frame_);
+              fr->ProcessFrame(frame_);
             }             
         }
 
@@ -603,10 +553,7 @@ bool ParseAndCheckCommandLine(int argc, char *argv[]) {
 
 }  // namespace
 
-__declspec(dllexport)
-int __cdecl fr_main(int argc, char* argv[]) {
-    iStop = false;
-    iPause = false;
+int /*__cdecl*/ FR::fr_main(int argc, char* argv[], FR *fr) {
     try {
         /** This demo covers 4 certain topologies and cannot be generalized **/
         slog::info << "InferenceEngine: " << GetInferenceEngineVersion() << slog::endl;
@@ -1064,7 +1011,7 @@ int __cdecl fr_main(int argc, char* argv[]) {
 
             ++total_num_frames;
 
-            sc_visualizer.Show();
+            sc_visualizer.Show(fr);
 
             if (FLAGS_last_frame >= 0 && work_num_frames > static_cast<size_t>(FLAGS_last_frame)) {
                 break;
@@ -1072,16 +1019,16 @@ int __cdecl fr_main(int argc, char* argv[]) {
             prev_frame = frame.clone();
             logger.FinalizeFrameRecord();
 
-            while (iPause && !iStop)
+            while (fr->iPause && !fr->iStop)
             {
               std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             }
         }
 
-        if (iOnCameraEventCbk)
+        if (fr->iOnCameraEventCbk)
         {
-          iOnCameraEventCbk("stop", "", "", std::vector<uint8_t>());
-          iOnCameraEventCbk = nullptr;
+          fr->iOnCameraEventCbk("stop", "", "", std::vector<uint8_t>());
+          fr->iOnCameraEventCbk = nullptr;
         }
 
         sc_visualizer.Finalize();

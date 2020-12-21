@@ -8,11 +8,7 @@
 #include <CameraCV.hpp>
 
 // face recognition
-int fr_main(int argc, char *argv[]);
-void fr_setcbk(TOnCameraEventCbk cbk);
-void fr_play(bool);
-void fr_pause(bool);
-void fr_stop(void);
+#include "../FR/fr.hpp"
 
 class COVCamera : public CCamera
 {
@@ -33,7 +29,7 @@ class COVCamera : public CCamera
     {
       if (iTarget == "fr") 
       {
-        fr_setcbk(cbk);
+        iFR.fr_setcbk(cbk);
       }
 
       iRunThread = std::thread(&COVCamera::Run, this);
@@ -43,7 +39,7 @@ class COVCamera : public CCamera
     {
       if (iTarget == "fr") 
       {
-        fr_stop();
+        iFR.fr_stop();
       }
     }
 
@@ -53,8 +49,8 @@ class COVCamera : public CCamera
 
       if (iTarget == "fr") 
       {
-        fr_play(true);
-        fr_pause(false);
+        iFR.fr_play(true);
+        iFR.fr_pause(false);
       }
     }
 
@@ -64,7 +60,7 @@ class COVCamera : public CCamera
 
       if (iTarget == "fr") 
       {
-        fr_pause(true); 
+        iFR.fr_pause(true); 
       }
     }
 
@@ -74,7 +70,7 @@ class COVCamera : public CCamera
 
       if (iTarget == "fr") 
       {
-        fr_play(false);
+        iFR.fr_play(false);
       }
     }
 
@@ -95,7 +91,7 @@ class COVCamera : public CCamera
          "-i", (char *)(iSource.c_str())
         };
 
-        fr_main(sizeof(argv)/sizeof(char *), argv);
+        iFR.fr_main(sizeof(argv)/sizeof(char *), argv, &iFR);
       }
       else 
       {
@@ -104,6 +100,8 @@ class COVCamera : public CCamera
     }
 
   protected:
+
+    FR iFR;
 
     std::string iSource;
     

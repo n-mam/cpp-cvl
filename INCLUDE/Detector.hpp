@@ -21,16 +21,8 @@ class CDetector : public NPL::CSubject<uint8_t, uint8_t>
 
     CDetector(const std::string& config, const std::string& weight)
     {
-      if (getenv("cpp-cvl-test"))
-      {
-        iConfigFile = "../../cpp-cvl/MODELS/" + config;
-        iWeightFile = "../../cpp-cvl/MODELS/" + weight;
-      }
-      else
-      {
-        iConfigFile = "./MODELS/" + config;
-        iWeightFile = "./MODELS/" + weight;
-      }
+      iConfigFile = GetModelHomeDir() + config;
+      iWeightFile = GetModelHomeDir() + weight;
 
       try
       {
@@ -486,11 +478,11 @@ class IEDetector : public CDetector
 
       if (iTarget == "people")
       {
-        network = iCore.ReadNetwork("../../cpp-cvl/MODELS/person-detection-retail-0013/FP16/person-detection-retail-0013.xml");
+        network = iCore.ReadNetwork(GetModelHomeDir() + "person-detection-retail-0013/FP16/person-detection-retail-0013.xml");
       }
       else if (iTarget == "face")
       {
-         network = iCore.ReadNetwork("../../cpp-cvl/MODELS/face-detection-retail-0005/FP16/face-detection-retail-0005.xml");
+         network = iCore.ReadNetwork(GetModelHomeDir() + "face-detection-retail-0005/FP16/face-detection-retail-0005.xml");
 
          iAgeGenderDetector = std::make_shared<AgeGenderDetector>();
       }

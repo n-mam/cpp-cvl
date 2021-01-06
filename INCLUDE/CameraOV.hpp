@@ -84,10 +84,10 @@ class COVCamera : public CCamera
       {
         char * argv[] =  {
          "smart_classroom_demo.exe",
-         "-m_fd", "../../cpp-cvl/MODELS/face-detection-adas-0001/FP16/face-detection-adas-0001.xml",
-         "-m_lm", "../../cpp-cvl/MODELS/landmarks-regression-retail-0009/landmarks-regression-retail-0009.xml",
-         "-m_reid", "../../cpp-cvl/MODELS/face-reidentification-retail-0095/FP16/face-reidentification-retail-0095.xml",
-         "-fg", "../../cpp-cvl/MODELS/fr_gallery/faces_gallery.json",
+         "-m_fd", (char *)(GetModelHomeDir() + "face-detection-adas-0001/FP16/face-detection-adas-0001.xml"s).c_str(),
+         "-m_lm", (char *)(GetModelHomeDir() + "landmarks-regression-retail-0009/landmarks-regression-retail-0009.xml"s).c_str(),
+         "-m_reid", (char *)(GetModelHomeDir() + "face-reidentification-retail-0095/FP16/face-reidentification-retail-0095.xml"s).c_str(),
+         "-fg", (char *)(GetModelHomeDir() + "fr_gallery/faces_gallery.json"s).c_str(),
          "-i", (char *)(iSource.c_str())
         };
 

@@ -7,6 +7,8 @@
 #include <tuple>
 #include <vector>
 
+using namespace std::string_literals;
+
 bool IsRectInsideMat(const cv::Rect2d& r, const cv::Mat& m)
 {
   return ((static_cast<cv::Rect>(r) & cv::Rect(0, 0, m.cols, m.rows)).area() == static_cast<cv::Rect>(r).area());
@@ -43,6 +45,11 @@ double Distance(cv::Point p1, cv::Point p2) //double x1, double y1, double x2, d
 bool DoesIntersectReferenceLine(cv::Point start, cv::Point end, int refx, int refy)
 {
   return false;
+}
+
+auto GetModelHomeDir(void)
+{
+  return std::string(getenv("cpp-cvl-home")) + std::string("/MODELS/");
 }
 
 using Detection = std::tuple<cv::Rect2d, float, float, bool>;
@@ -120,7 +127,6 @@ struct TrackingContext
     return _maleScore > _femaleScore;
   }
 };
-
 
 using TOnCameraEventCbk = std::function<void (const std::string&, const std::string&, const std::string&, std::vector<uint8_t>&)>;
 

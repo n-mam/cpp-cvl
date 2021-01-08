@@ -45,6 +45,7 @@ namespace {
 
 }  // namespace
 
+std::string EmbeddingsGallery::fr_gallery_root = "";
 const char EmbeddingsGallery::unknown_label[] = "Unknown";
 const int EmbeddingsGallery::unknown_id = TrackedObject::UNKNOWN_LABEL_IDX;
 
@@ -109,8 +110,8 @@ EmbeddingsGallery::EmbeddingsGallery(const std::string& ids_list,
 
         for (size_t i = 0; i < item.size(); i++) {
             std::string path;
-            if (file_exists(item[i].string())) {
-                path = item[i].string();
+            if (file_exists(EmbeddingsGallery::fr_gallery_root + item[i].string())) {
+                path = EmbeddingsGallery::fr_gallery_root + item[i].string();
             } else {
                 path = folder_name(ids_list) + separator() + item[i].string();
             }

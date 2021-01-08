@@ -91,6 +91,8 @@ class COVCamera : public CCamera
          "-i", (char *)(iSource.c_str())
         };
 
+        iFR.iModelHomeDir = GetModelHomeDir();
+
         iFR.fr_main(sizeof(argv)/sizeof(char *), argv, &iFR);
       }
       else 
@@ -105,7 +107,7 @@ class COVCamera : public CCamera
 
     std::string iSource;
     
-    std::string iTarget; 
+    std::string iTarget;
 };
 
 using SPCOVCamera = std::shared_ptr<COVCamera>;

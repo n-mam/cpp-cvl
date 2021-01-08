@@ -54,6 +54,8 @@ struct FR
     iOnCameraEventCbk("play", "", "", buf);
   }
 
+  std::string iModelHomeDir;
+
   int fr_main(int argc, char* argv[], FR *);
 };
 

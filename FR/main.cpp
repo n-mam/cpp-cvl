@@ -562,6 +562,7 @@ int /*__cdecl*/ FR::fr_main(int argc, char* argv[], FR *fr) {
             return 0;
         }
 
+        EmbeddingsGallery::fr_gallery_root = fr->iModelHomeDir + "fr_gallery/";
         const auto video_path = FLAGS_i;
         const auto ad_model_path = FLAGS_m_act;
         const auto fd_model_path = FLAGS_m_fd;
@@ -969,6 +970,7 @@ int /*__cdecl*/ FR::fr_main(int argc, char* argv[], FR *fr) {
                             label_to_draw += "[" + GetActionTextLabel(action_ind, actions_map) + "]";
                         }
                         frame_face_obj_id_to_action[face.object_id] = action_ind;
+                        std::cout << "actions_type == STUDENT " << label_to_draw << "\n";
                         sc_visualizer.DrawObject(face.rect, label_to_draw, blue_color, white_color, false);
                         logger.AddFaceToFrame(face.rect, face_label, "");
                     }

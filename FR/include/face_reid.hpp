@@ -31,6 +31,7 @@ struct GalleryObject {
 
 class EmbeddingsGallery {
 public:
+    static std::string fr_gallery_root;
     static const char unknown_label[];
     static const int unknown_id;
     EmbeddingsGallery(const std::string& ids_list, double threshold, int min_size_fr,

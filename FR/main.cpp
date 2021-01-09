@@ -555,8 +555,6 @@ bool ParseAndCheckCommandLine(int argc, char *argv[]) {
 
 int /*__cdecl*/ FR::fr_main(int argc, char* argv[], FR *fr) {
 
-    EmbeddingsGallery::fr_gallery_root = fr->iModelHomeDir + "fr_gallery/";
-
     try {
         /** This demo covers 4 certain topologies and cannot be generalized **/
         slog::info << "InferenceEngine: " << GetInferenceEngineVersion() << slog::endl;
@@ -565,6 +563,7 @@ int /*__cdecl*/ FR::fr_main(int argc, char* argv[], FR *fr) {
             return 0;
         }
 
+        EmbeddingsGallery::fr_gallery_root = fr->iModelHomeDir + std::string("fr_gallery/");
         const auto video_path = FLAGS_i;
         const auto ad_model_path = FLAGS_m_act;
         const auto fd_model_path = FLAGS_m_fd;

@@ -82,12 +82,17 @@ class COVCamera : public CCamera
     {
       if (iTarget == "fr")
       {
+        m_fd = GetModelHomeDir() + "face-detection-adas-0001/FP16/face-detection-adas-0001.xml"s;
+        m_lm = GetModelHomeDir() + "landmarks-regression-retail-0009/landmarks-regression-retail-0009.xml"s;
+        m_reid = GetModelHomeDir() + "face-reidentification-retail-0095/FP16/face-reidentification-retail-0095.xml"s;
+        fg = GetModelHomeDir() + "fr_gallery/faces_gallery.json"s;
+
         char * argv[] =  {
          "smart_classroom_demo.exe",
-         "-m_fd", (char *)(GetModelHomeDir() + "face-detection-adas-0001/FP16/face-detection-adas-0001.xml"s).c_str(),
-         "-m_lm", (char *)(GetModelHomeDir() + "landmarks-regression-retail-0009/landmarks-regression-retail-0009.xml"s).c_str(),
-         "-m_reid", (char *)(GetModelHomeDir() + "face-reidentification-retail-0095/FP16/face-reidentification-retail-0095.xml"s).c_str(),
-         "-fg", (char *)(GetModelHomeDir() + "fr_gallery/faces_gallery.json"s).c_str(),
+         "-m_fd", (char *) m_fd.c_str(),
+         "-m_lm", (char *) m_lm.c_str(),
+         "-m_reid", (char *) m_reid.c_str(),
+         "-fg", (char *) fg.c_str(),
          "-i", (char *)(iSource.c_str())
         };
 
@@ -108,6 +113,16 @@ class COVCamera : public CCamera
     std::string iSource;
     
     std::string iTarget;
+
+    std::string m_fd;
+
+    std::string m_lm;
+
+    std::string m_reid;
+
+    std::string fg;
+
+
 };
 
 using SPCOVCamera = std::shared_ptr<COVCamera>;

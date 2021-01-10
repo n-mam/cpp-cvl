@@ -563,6 +563,7 @@ int /*__cdecl*/ FR::fr_main(int argc, char* argv[], FR *fr) {
             return 0;
         }
 
+        std::map<std::string, std::tuple<int, int>> fr_map;
         EmbeddingsGallery::fr_gallery_root = fr->iModelHomeDir + std::string("fr_gallery/");
         const auto video_path = FLAGS_i;
         const auto ad_model_path = FLAGS_m_act;
@@ -971,7 +972,18 @@ int /*__cdecl*/ FR::fr_main(int argc, char* argv[], FR *fr) {
                             label_to_draw += "[" + GetActionTextLabel(action_ind, actions_map) + "]";
                         }
                         frame_face_obj_id_to_action[face.object_id] = action_ind;
-                        //nnn std::cout << "actions_type == STUDENT " << label_to_draw << "\n";
+
+                        if (label_to_draw.size())
+                        {
+                          auto& data = fr_map[label_to_draw];
+
+                          auto& count = std::get<0>(data);
+                          count++;
+
+                          auto& last_seen_in_frame = std::get<1>(data);
+                          last_seen_in_frame = total_num_frames;
+                        }
+
                         sc_visualizer.DrawObject(face.rect, label_to_draw, blue_color, white_color, false);
                         logger.AddFaceToFrame(face.rect, face_label, "");
                     }
@@ -1025,6 +1037,23 @@ int /*__cdecl*/ FR::fr_main(int argc, char* argv[], FR *fr) {
             while (fr->iPause && !fr->iStop)
             {
               std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            }
+
+            for (auto& f = fr_map.cbegin(); f != fr_map.cend(); )
+            {
+              auto& data = (*f).second;
+
+              if ((total_num_frames - std::get<1>(data)) > 10)
+              {
+                fr->iOnCameraEventCbk(
+                  "face", 
+                  (*f).first,                        // label
+                  std::to_string(std::get<0>(data)),  // count
+                  std::vector<uint8_t>());
+
+                f = fr_map.erase(f);
+              }
+              ++f;
             }
         }
 

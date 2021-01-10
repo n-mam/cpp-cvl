@@ -27,7 +27,7 @@ class COVCamera : public CCamera
 
     virtual void Start(TOnCameraEventCbk cbk = nullptr)
     {
-      if (iTarget == "fr") 
+      if (iTarget == "fr")
       {
         iFR.fr_setcbk(cbk);
       }
@@ -37,7 +37,7 @@ class COVCamera : public CCamera
 
     virtual void Stop(void)
     {
-      if (iTarget == "fr") 
+      if (iTarget == "fr")
       {
         iFR.fr_stop();
       }
@@ -77,7 +77,7 @@ class COVCamera : public CCamera
     virtual void Forward(void) {}
 
     virtual void Backward(void) {}
- 
+
     virtual void Run(void)
     {
       if (iTarget == "fr")
@@ -121,8 +121,6 @@ class COVCamera : public CCamera
     std::string m_reid;
 
     std::string fg;
-
-
 };
 
 using SPCOVCamera = std::shared_ptr<COVCamera>;

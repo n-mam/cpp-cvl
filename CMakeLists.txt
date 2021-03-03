@@ -1,8 +1,8 @@
 project (cpp-cvl)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
-# SET OPENCV_DIR=C:/opencv/build/install
-# SET OPENSSL_ROOT_DIR=C:/vcpkg/installed/x64-windows
+# SET OPENCV_DIR=D:/opencv/build/install
+# SET OPENSSL_ROOT_DIR=D:/vcpkg/installed/x64-windows
 
 find_package(Threads REQUIRED)
 find_package(OpenCV REQUIRED)

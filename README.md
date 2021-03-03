@@ -53,7 +53,9 @@ copy C:\Program Files (x86)\IntelSWTools\compilers_and_libraries\windows\redist\
 copy C:\Program Files (x86)\IntelSWTools\compilers_and_libraries\windows\redist\intel64_win\compiler\libiomp5md.dll
 to the run folder or 
 
-set path=%path%;C:\Program Files (x86)\IntelSWTools\compilers_and_libraries\windows\redist\intel64_win\tbb\vc_mt;C:\Program Files (x86)\IntelSWTools\compilers_and_libraries\windows\redist\intel64_win\compiler\;C:\opencv\build\install\x64\vc16\bin
+install intel compiler redistributable
+
+set path=%path%;D:\opencv\build\install\x64\vc16\bin
 
 #dlib
 
@@ -65,6 +67,8 @@ set OPENCV_DIR=C:\opencv\build\install
 
 #opencv with openvino
 
+Download ninja for windows from here and unzip the binary somewhere in PATH
+
 cmake ^
 -GNinja ^
 -DWITH_INF_ENGINE=ON ^
@@ -74,13 +78,14 @@ cmake ^
 -DOPENCV_ENABLE_NONFREE=ON ^
 -DWITH_OPENCL=ON ^
 -DENABLE_FAST_MATH=1 ^
--DOPENCV_EXTRA_MODULES_PATH=C:\opencv_contrib\modules ^
--DCMAKE_INSTALL_PREFIX=C:\opencv\build\install ^
+-DOPENCV_EXTRA_MODULES_PATH=D:\opencv_contrib\modules ^
+-DCMAKE_INSTALL_PREFIX=D:\opencv\build\install ^
 -DBUILD_EXAMPLES=ON ^
 -DHAVE_opencv_python3=ON ^
 -DBUILD_opencv_rgbd=OFF ^
 -DCMAKE_BUILD_TYPE=Release ..
 
+cmake --install .
 
 smart_classroom_demo.exe ^
  -m_fd F:\cpp-cvl\MODELS\face-detection-adas-0001\FP16\face-detection-adas-0001.xml ^

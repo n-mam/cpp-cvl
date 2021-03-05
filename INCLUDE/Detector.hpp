@@ -628,7 +628,7 @@ void FilterDetections(Detections& detections, cv::Mat& m)
 
     auto& roi = std::get<0>(*it);
 
-    if (roi.x + roi.width > m.cols || roi.y + roi.height > m.rows)
+    if (roi.x < 0 || roi.x + roi.width > m.cols || roi.x < 0 || roi.y + roi.height > m.rows)
     {
       remove = true;
     }

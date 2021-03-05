@@ -92,19 +92,22 @@ class CTracker : public NPL::CSubject<uint8_t, uint8_t>
       for (auto& t : iTrackingContexts)
       {
         int maxArea = 0;
-        
+
         t.iMatch = nullptr;
+
+        auto& last = t.iTrail.back();
 
         for (auto& d : detections)
         {
-          auto& roi = std::get<0>(d);
           auto& matched = std::get<3>(d);
 
           if (!matched)
           {
-            if (DoesRectOverlapRect(roi, t.iTrail.back()))
+            auto& roi = std::get<0>(d);
+
+            if (DoesRectOverlapRect(roi, last))
             {
-              auto area = (roi & t.iTrail.back()).area();
+              auto area = (roi & last).area();
 
               if (area > maxArea)
               {
@@ -118,7 +121,7 @@ class CTracker : public NPL::CSubject<uint8_t, uint8_t>
         if (t.iMatch)
         {
           std::get<3>(*(t.iMatch)) = true;
-          t.iThumbnails.push_back(mat(std::get<0>(*(t.iMatch))).clone());
+          t.iThumbnails.emplace_back(mat(std::get<0>(*(t.iMatch))).clone());
         }
       }
 

@@ -117,12 +117,12 @@ struct TrackingContext
     iGender.push_back(isMale() ? "M" : "F");
   }
 
-  int getAge() 
+  int getAge()
   {
     return static_cast<int>(std::floor(iAge.back() + 0.5f));
   }
 
-  bool isMale() 
+  bool isMale()
   {
     return _maleScore > _femaleScore;
   }

@@ -5,26 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "TestCVL openvino",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build/intel64/Release/TestCVL.exe",
-            "args": ["f:\\tv2.mp4"],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/build",
-            "environment": [],
-            "externalConsole": true
-        },
-        {
             "name": "TestCVL opencv",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/Release/TestCVL.exe",
-            "args": ["people", "f:\\overpass.mp4"],
+            "program": "${workspaceFolder}/../build/intel64/Release/TestCVL.exe",
+            "args": ["people", "d:\\videos\\overpass.mp4"],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/build",
-            "environment": [],
-            "externalConsole": true
+            "cwd": "${workspaceFolder}",
+            "environment": [{"name": "cpp-cvl-home", "value": "F:/openvino/inference_engine/demos/cpp-cvl"} ],
+            "console": true
         },
         {
             "name": "interactive_face_detection_demo",
@@ -35,7 +24,7 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/../build",
             "environment": [],
-            "externalConsole": true
+            "console": true
         }
     ]
 }

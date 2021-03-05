@@ -13,6 +13,7 @@ class CSource
     CSource(const std::string& s)
     {
       iCapture = cv::VideoCapture(s.c_str());
+      iCapture.set(cv::CAP_PROP_BUFFERSIZE, 3);
     }
     
     CSource(int c)

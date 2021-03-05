@@ -34,6 +34,7 @@ class CTracker : public NPL::CSubject<uint8_t, uint8_t>
       }
 
       iTrackingContexts.clear();
+
       iCounter.reset(new CCounter());
     }
 

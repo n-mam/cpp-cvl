@@ -268,7 +268,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
         }
         else
         {
-          if (GetName() == "TESTCV")
+          if (GetName() == "CV")
           {
             cv::imshow(this->GetName().c_str(), frame);
           }

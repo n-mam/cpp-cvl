@@ -61,7 +61,7 @@ struct TrackingContext
 
   int iLostCount = 0;
 
-  Detection *iMatch;
+  Detection *iDetectionMatch;
 
   std::vector<float> iAge;
 
@@ -69,7 +69,7 @@ struct TrackingContext
   float _maleScore = 0;
   float _femaleScore = 0;
 
-  cv::Ptr<cv::Tracker> iTracker;   // cv tracker
+  cv::Ptr<cv::Tracker> iTrackerCV;   // cv tracker
 
   std::vector<cv::Rect2d> iTrail;  // track bb trail
 

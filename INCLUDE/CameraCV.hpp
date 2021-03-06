@@ -72,6 +72,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       {
         SetProperty("stop", "false");
         SetProperty("pause", "false");
+        SetProperty("play", "false");
 
         iOnCameraEventCbk = cbk;
 

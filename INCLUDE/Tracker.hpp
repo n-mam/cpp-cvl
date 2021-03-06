@@ -94,7 +94,7 @@ class CTracker : public NPL::CSubject<uint8_t, uint8_t>
       {
         int maxArea = 0;
 
-        t.iMatch = nullptr;
+        t.iDetectionMatch = nullptr;
 
         auto& last = t.iTrail.back();
 
@@ -113,24 +113,24 @@ class CTracker : public NPL::CSubject<uint8_t, uint8_t>
               if (area > maxArea)
               {
                 maxArea = area;
-                t.iMatch = &d;
+                t.iDetectionMatch = &d;
               }
             }
           }
         }
 
-        if (t.iMatch)
+        if (t.iDetectionMatch)
         {
-          std::get<3>(*(t.iMatch)) = true;
-          t.iThumbnails.emplace_back(mat(std::get<0>(*(t.iMatch))).clone());
+          std::get<3>(*(t.iDetectionMatch)) = true;
+          t.iThumbnails.emplace_back(mat(std::get<0>(*(t.iDetectionMatch))).clone());
         }
       }
 
       for (auto& t : iTrackingContexts)
       {
-        if (t.iMatch)
+        if (t.iDetectionMatch)
         {
-          cv::rectangle(mat, std::get<0>(*(t.iMatch)), 
+          cv::rectangle(mat, std::get<0>(*(t.iDetectionMatch)), 
                cv::Scalar(255, 0, 0 ), 1, 1);  // detection blue
         }
         else
@@ -155,11 +155,11 @@ class CTracker : public NPL::CSubject<uint8_t, uint8_t>
       //param.template_size = 150;
       //param.admm_iterations = 3;
 
-      tc.iTracker = cv::TrackerCSRT::create(params);
+      tc.iTrackerCV = cv::TrackerCSRT::create(params);
 
       tc.iTrail.push_back(roi);
 
-      tc.iTracker->init(m, roi);
+      tc.iTrackerCV->init(m, roi);
 
       cv::rectangle(m, roi, cv::Scalar(0, 0, 0 ), 2, 1);  // white
 
@@ -185,13 +185,13 @@ class CTracker : public NPL::CSubject<uint8_t, uint8_t>
         {
           SaveAndPurgeTrackingContext(tc);
           iTrackingContexts.erase(iTrackingContexts.begin() + (i - 1));
-          std::cout << "removed frozen tc\n";
+          std::cout << "Removed frozen tc" << std::endl;
           continue;
         }
 
         cv::Rect2d bb;
 
-        bool fRet = tc.iTracker->update(frame, bb);
+        bool fRet = tc.iTrackerCV->update(frame, bb);
 
         if (fRet)
         {
@@ -238,9 +238,10 @@ class CTracker : public NPL::CSubject<uint8_t, uint8_t>
     {
       OnEvent(std::ref(tc));
 
-      if (iPurgedContexts.size() > 20)
+      if (iPurgedContexts.size() > 5)
       {
         iPurgedContexts.clear();
+        std::cout << "clearing iPurgedContexts..." << std::endl;
       }
 
       iPurgedContexts.push_back(tc);

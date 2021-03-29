@@ -25,8 +25,8 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
     {
       SetProperty("skipcount", "0");
 
-      SetProperty("rtsp_transport", "udp");
-	    putenv("OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;udp");
+      SetProperty("rtsp_transport", "tcp");
+	    putenv("OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;tcp");
 
       if (isdigit(source[0]))
       {
@@ -204,9 +204,9 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
           }
         }
 
-        if (frame.cols > 600)
+        if (frame.cols > 400)
         {
-          auto scale = (float) 600 / frame.cols;
+          auto scale = (float) 400 / frame.cols;
           cv::resize(frame, frame, cv::Size(0, 0), scale, scale);
         }
 

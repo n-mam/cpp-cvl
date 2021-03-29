@@ -111,7 +111,7 @@ class COVCamera : public CCamera
     FR iFR;
 
     std::string iSource;
-    
+
     std::string iTarget;
 
     std::string m_fd;

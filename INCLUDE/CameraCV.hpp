@@ -251,7 +251,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
           }
         }
 
-        iTracker->RenderDisplacementAndPaths(frame, GetName() == "CV");
+        iTracker->RenderDisplacementAndPaths(frame, GetProperty("name") == "CV");
 
         {
           std::lock_guard<std::mutex> lg(iLock);
@@ -269,9 +269,9 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
         }
         else
         {
-          if (GetName() == "CV")
+          if (GetProperty("name") == "CV")
           {
-            cv::imshow(this->GetName().c_str(), frame);
+            cv::imshow(this->GetProperty("name").c_str(), frame);
           }
         }
 

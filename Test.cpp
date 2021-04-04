@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
 
    auto camera = CVL::make_camera(source, target);
    
-   camera->SetName("CV");
+   camera->SetProperty("name", "CV");
 
    camera->Start(
     [](const std::string& e, const std::string& data, std::vector<uint8_t>& frame) {
@@ -29,8 +29,7 @@ int main(int argc, char *argv[])
 
    auto camera = CVL::make_camera(source, target, "gmg", "CSRT");
 
-   camera->SetName("CV");
-
+   camera->SetProperty("name", "CV");
    camera->SetProperty("skipcount", "0");
    camera->SetProperty("bbarea", "1000");
 

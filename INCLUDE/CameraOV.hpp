@@ -25,14 +25,20 @@ class COVCamera : public CCamera
       Stop();
     }
 
-    virtual void Start(TOnCameraEventCbk cbk = nullptr)
+    virtual bool Start(TOnCameraEventCbk cbk = nullptr)
     {
+      bool fRet = false;
+
       if (iTarget == "fr")
       {
         iFR.fr_setcbk(cbk);
       }
 
       iRunThread = std::thread(&COVCamera::Run, this);
+
+      fRet = true;
+
+      return fRet;
     }
 
     virtual void Stop(void)

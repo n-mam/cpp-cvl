@@ -66,8 +66,10 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
       Stop();
     }
 
-    virtual void Start(TOnCameraEventCbk cbk = nullptr)
+    virtual bool Start(TOnCameraEventCbk cbk = nullptr)
     {
+      bool fRet = false;
+
       if (iSource->isOpened())
       {
         SetProperty("stop", "false");
@@ -79,11 +81,15 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
         iTracker->AddEventListener(iDetector)->AddEventListener(shared_from_this());
 
         iRunThread = std::thread(&CCamera::Run, this);
+
+        fRet = true;
       }
       else
       {
         std::cout << "Camera source not opened\n";
       }
+
+      return fRet;
     }
 
     virtual void Stop(void)

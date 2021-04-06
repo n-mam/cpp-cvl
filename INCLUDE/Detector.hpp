@@ -410,6 +410,12 @@ class BackgroundSubtractor : public CDetector
 
       pBackgroundSubtractor->apply(frame, fgMask, 0.8);
 
+      // // Blur the foreground mask to reduce the effect of noise and false positives
+      // cv::blur(fgMask, fgMask, cv::Size(15, 15), cv::Point(-1, -1));
+
+      // // Remove the shadow parts and the noise
+      // cv::threshold(fgMask, fgMask, 120, 255, cv::THRESH_BINARY);
+
       cv::findContours(fgMask, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
       auto areaThreshold = GetPropertyAsInt("bbarea");

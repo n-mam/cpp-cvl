@@ -191,7 +191,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
     {
       cv::Mat frame;
 
-      DWORD startTime = GetTickCount();
+      auto started_at = std::chrono::high_resolution_clock::now();
 
       while (!GetPropertyAsBool("stop"))
       {
@@ -201,7 +201,7 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
           {
             iSource->Rewind();
             iTracker->ClearAllContexts();
-            startTime = GetTickCount();
+            started_at = std::chrono::high_resolution_clock::now();
             continue;
           }
           else
@@ -261,8 +261,9 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
 
         {
           std::lock_guard<std::mutex> lg(iLock);
-
-          auto fps = (float) iSource->GetCurrentOffset() / (float)((GetTickCount() - startTime) / 1000);
+          auto finished_at = std::chrono::high_resolution_clock::now();
+          auto duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(finished_at - started_at).count();
+          auto fps = (float) iSource->GetCurrentOffset() / (float)(duration_ms / 1000);
           cv::putText(frame, "FPS : " + std::to_string(fps), cv::Point(5, 10), 
                  cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255, 255, 255), 1);
         }

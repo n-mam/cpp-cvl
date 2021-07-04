@@ -24,7 +24,6 @@ class CCamera : public NPL::CSubject<uint8_t, uint8_t>
     CCamera(const std::string& source, const std::string& target, const std::string& algo)
     {
       SetProperty("skipcount", "0");
-
       SetProperty("rtsp_transport", "tcp");
 	    putenv("OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;tcp");
 

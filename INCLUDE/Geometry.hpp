@@ -6,6 +6,7 @@
 
 #include <tuple>
 #include <vector>
+#include <cstdlib>
 
 using namespace std::string_literals;
 
@@ -49,7 +50,16 @@ bool DoesIntersectReferenceLine(cv::Point start, cv::Point end, int refx, int re
 
 auto GetModelHomeDir(void)
 {
-  return std::string(getenv("cpp-cvl-home")) + std::string("/MODELS/");
+  std::string dir = "";
+
+  auto home = std::getenv("cpp-cvl-home");
+
+  if (home)
+  {
+    dir = std::string(home) + std::string("/MODELS/");
+  }
+
+  return dir;
 }
 
 using Detection = std::tuple<cv::Rect2d, float, float, bool>;
